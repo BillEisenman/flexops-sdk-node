@@ -1,0 +1,52 @@
+name: Publish to npm
+
+# Publish to registry.npmjs.org when a vX.Y.Z tag is pushed.
+# Secret required (GitHub → Settings → Secrets → Actions):
+#   NPM_TOKEN — an npm Automation token with publish scope for @flexops/sdk
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:  # manual button for re-publish of an existing tag
+
+permissions:
+  contents: read
+  id-token: write   # required for npm provenance attestation
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed for provenance to find the tagged commit
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify Gateway URL shipped
+        run: |
+          set -e
+          if ! grep -q "gateway.flexops.io" dist/index.js; then
+            echo "::error::dist/index.js does not reference gateway.flexops.io"
+            exit 1
+          fi
+          if grep -q "api.flexops.io" dist/index.js; then
+            echo "::error::dist/index.js still references the retired api.flexops.io"
+            exit 1
+          fi
+
+      - name: Publish
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
