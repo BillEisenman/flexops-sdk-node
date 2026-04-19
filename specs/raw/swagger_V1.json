@@ -1,0 +1,3272 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "FlexOps API - Core Services Documentation",
+    "description": "FlexOps Logistics and Fulfillment API   [DEV - v1.2.9246.6531]",
+    "termsOfService": "https://localhost:3443/legal/terms-of-service#api-terms",
+    "contact": {
+      "name": "Support",
+      "url": "https://www.flexops.io/",
+      "email": "support@flexops.io"
+    },
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:7190"
+    }
+  ],
+  "paths": {
+    "/api/v1/Inventory/postNewAsnReceipt": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Submits the new ship asn receipt.",
+        "requestBody": {
+          "description": "The asn receipt submit.",
+          "content": {
+            "application/json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Inventory.AsnReceipt"
+              }
+            },
+            "text/json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Inventory.AsnReceipt"
+              }
+            },
+            "application/*+json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Inventory.AsnReceipt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Inventory/getWarehouseInventorySnapshot": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Gets the warehouse inventory snapshot.",
+        "parameters": [
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "description": "The warehouse identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 9
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Inventory/getCompleteInventorySnapshot": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Gets the complete inventory snapshot (all warehouse locations).",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Inventory/getPartNumberList": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Gets the part number list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getNewOrderList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the new order list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getNewOrderItemsList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the new order items list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getCanceledOrderList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the canceled orders list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getIndividualOrderStatusByOrderNumber": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the individual order status by order number.",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "query",
+            "description": "The order number.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getAllOrderListByStatus": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets all order list by status.",
+        "parameters": [
+          {
+            "name": "statusType",
+            "in": "query",
+            "description": "Type of the status.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": -1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getAllOrderItemsListByStatus": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets all order items list by status.",
+        "parameters": [
+          {
+            "name": "statusType",
+            "in": "query",
+            "description": "Type of the status.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": -1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getCompleteOrderDetailsByOrderNumber": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the complete order details by order number.",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "query",
+            "description": "The order number.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getExtendedOrderDetailsByOrderNumber": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the extended order details by order number.",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "query",
+            "description": "The order number.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getAllOrderItemsByOrderNumber": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets all order items by order number.",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "query",
+            "description": "The order number.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getOrderAddressByOrderNumberAndAddressTypeId": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the order address by order number and address type identifier.",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "query",
+            "description": "The order number.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "addressTypeId",
+            "in": "query",
+            "description": "The address type identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getCarrierShipRateCardValuesByCarrierId": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the carrier ship rate card using carrier identifier, rate type, master class and rate subclass",
+        "parameters": [
+          {
+            "name": "carrierId",
+            "in": "query",
+            "description": "The carrier identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "rateType",
+            "in": "query",
+            "description": "Type of the rate. Default = \"Merchant Rate Card\"",
+            "schema": {
+              "type": "string",
+              "default": "Merchant Rate Card"
+            }
+          },
+          {
+            "name": "rateMasterClassification",
+            "in": "query",
+            "description": "The rate master classification. Default = \"ALL\"",
+            "schema": {
+              "type": "string",
+              "default": "ALL"
+            }
+          },
+          {
+            "name": "rateSubClassification",
+            "in": "query",
+            "description": "The rate subclassification. Default = \"COMPLETE\"",
+            "schema": {
+              "type": "string",
+              "default": "COMPLETE"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getCarrierShipRateCardDetailByCarrierId": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the carrier ship rate card detail using carrier identifier, rate type, rate master class,\r\npackage physical dimension measurements in inches, and weight measurement in ounces.",
+        "parameters": [
+          {
+            "name": "carrierId",
+            "in": "query",
+            "description": "The carrier identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "rateType",
+            "in": "query",
+            "description": "Type of the rate.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rateMasterClassification",
+            "in": "query",
+            "description": "The rate master classification.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lengthDimensionInInches",
+            "in": "query",
+            "description": "The length dimension.",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "widthDimensionInInches",
+            "in": "query",
+            "description": "The width dimension.",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "heightDimensionInInches",
+            "in": "query",
+            "description": "The height dimension.",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "packageWeightInOunces",
+            "in": "query",
+            "description": "The package weight in ounces.",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getZoneSpecificCarrierShipRateCardDetailByCarrierId": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the zone specific carrier ship rate card detail using carrier identifier, rate type, master class,\r\ndimensions, weight and zone.",
+        "parameters": [
+          {
+            "name": "carrierId",
+            "in": "query",
+            "description": "The carrier identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "rateType",
+            "in": "query",
+            "description": "Type of the rate.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rateMasterClassification",
+            "in": "query",
+            "description": "The rate master classification.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lengthDimensionInInches",
+            "in": "query",
+            "description": "The length dimension in inches.",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "widthDimensionInInches",
+            "in": "query",
+            "description": "The width dimension in inches.",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "heightDimensionInInches",
+            "in": "query",
+            "description": "The height dimension in inches.",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "packageWeightInOunces",
+            "in": "query",
+            "description": "The package weight in ounces.",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "postalShipZone",
+            "in": "query",
+            "description": "The postal ship zone.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/details/{id}": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets order details by ID using Wolverine CQRS pattern.\r\nThis is a new endpoint that demonstrates the Wolverine message bus approach.",
+        "description": "This endpoint uses the CQRS pattern via Wolverine for better testability and separation of concerns.\r\nIf IMessageBus is not available, returns 503 Service Unavailable.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The order identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "customerId",
+            "in": "query",
+            "description": "The customer identifier (optional - uses claim if not provided).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.CQRS.Orders.OrderDetailsDto"
+                }
+              },
+              "application/json; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.CQRS.Orders.OrderDetailsDto"
+                }
+              },
+              "text/json; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.CQRS.Orders.OrderDetailsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json; x-media-version=1.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getCountryNameCodeList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the country name / code list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getCountryStateProvinceCodeList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the country state / province code list.",
+        "parameters": [
+          {
+            "name": "countryCode",
+            "in": "query",
+            "description": "The country code.",
+            "schema": {
+              "type": "string",
+              "default": "US"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getDutyTaxTypesList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the duty tax types list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getFreightTermTypesList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the freight term types list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getAvailableShipMethodsList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the ship methods list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getOrderStatusCategoryTypesList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the order status category types list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getOrderStatusTypesList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the order status types list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getOrderAddressTypesList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the order address types list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getOrderAmountTypesList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the order amount types list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getOrderSignatureDeliveryTypesList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the order signature delivery types list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getActiveWarehouseList": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the active customer warehouse list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getCustomerNameById": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Gets the name of the customer.",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "description": "The customer identifier.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/getShipMethodByCarrierProvidedParcel": {
+      "get": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Retrieve ship method by carrier provided parcel as an asynchronous operation.",
+        "parameters": [
+          {
+            "name": "mailClassFullname",
+            "in": "query",
+            "description": "The mail class fullname.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mailClassProductFilter",
+            "in": "query",
+            "description": "The mail class product filter.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/postNewOrder": {
+      "post": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Posts a new order.",
+        "requestBody": {
+          "description": "The order to submit.",
+          "content": {
+            "application/json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.WebOrder"
+              }
+            },
+            "text/json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.WebOrder"
+              }
+            },
+            "application/*+json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.WebOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/cancelOrderByOrderNumber": {
+      "post": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Cancels an order using the order number.",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "query",
+            "description": "The order number.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Order/insertUpdateOrderAddressUsingOrderNumberAndTypeId": {
+      "post": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Insert update order address using order number and type identifier as an asynchronous operation.",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "query",
+            "description": "The order number.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "addressTypeId",
+            "in": "query",
+            "description": "The address type identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "contact",
+            "in": "query",
+            "description": "The contact.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "description": "The company.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "address1",
+            "in": "query",
+            "description": "The address1.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "address2",
+            "in": "query",
+            "description": "The address2.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "address3",
+            "in": "query",
+            "description": "The address3.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "description": "The city.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "The state.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "postalCode",
+            "in": "query",
+            "description": "The postal code.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "description": "The country.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "description": "The phone.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "The email.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "residential",
+            "in": "query",
+            "description": "Indicates whether this is/is not a residential address.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Return/getReturnsListWithinDateRange": {
+      "get": {
+        "tags": [
+          "Return"
+        ],
+        "summary": "Gets the returns list.",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "in": "query",
+            "description": "From date.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "description": "To date.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Return/getReturnedOrderDetailByCustomerRma": {
+      "get": {
+        "tags": [
+          "Return"
+        ],
+        "summary": "Gets the returned order detail by customer rma.",
+        "parameters": [
+          {
+            "name": "customerRma",
+            "in": "query",
+            "description": "The customer rma.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Return/getReturnedOrderDetailByReturnId": {
+      "get": {
+        "tags": [
+          "Return"
+        ],
+        "summary": "Gets the returned order detail by return identifier.",
+        "parameters": [
+          {
+            "name": "returnId",
+            "in": "query",
+            "description": "The return identifier.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Return/getReturnsAwaitingCustomerDispositionList": {
+      "get": {
+        "tags": [
+          "Return"
+        ],
+        "summary": "Gets all the returns awaiting customer disposition list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Return/getCustomerDispositionChoiceTypes": {
+      "get": {
+        "tags": [
+          "Return"
+        ],
+        "summary": "Gets the customer disposition choice types.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Rma/postNewRmaOrder": {
+      "post": {
+        "tags": [
+          "Rma"
+        ],
+        "summary": "Posts the new rma order.",
+        "requestBody": {
+          "description": "The rma order2 submit.",
+          "content": {
+            "application/json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Returns.RmaOrder"
+              }
+            },
+            "text/json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Returns.RmaOrder"
+              }
+            },
+            "application/*+json; x-media-version=1.0": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Returns.RmaOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Rma/getRmaList": {
+      "get": {
+        "tags": [
+          "Rma"
+        ],
+        "summary": "Gets the rma list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Rma/getRmaOrderDetailByCustomerRma": {
+      "get": {
+        "tags": [
+          "Rma"
+        ],
+        "summary": "Gets the rma order detail by customer rma.",
+        "parameters": [
+          {
+            "name": "customerRma",
+            "in": "query",
+            "description": "The customer rma.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Rma/getRmaOrderDetailById": {
+      "get": {
+        "tags": [
+          "Rma"
+        ],
+        "summary": "Retrieves the rma order detail by identifier.",
+        "parameters": [
+          {
+            "name": "rmaOrderId",
+            "in": "query",
+            "description": "The rma order identifier.",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Serial/getAllAvailableSerialScanOperationsList": {
+      "get": {
+        "tags": [
+          "Serial"
+        ],
+        "summary": "Gets the available serial scan operations list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Serial/getAllAvailableSerialScanPartNumbersList": {
+      "get": {
+        "tags": [
+          "Serial"
+        ],
+        "summary": "Gets the available serial scan part numbers list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Serial/getAllAvailableSerialScanBundlePartNumbersList": {
+      "get": {
+        "tags": [
+          "Serial"
+        ],
+        "summary": "Retrieves the serial scan all available bundle part numbers list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Shipping/getStagedOrderlist": {
+      "get": {
+        "tags": [
+          "Shipping"
+        ],
+        "summary": "Gets the staged orders list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Shipping/getShippedOrderList": {
+      "get": {
+        "tags": [
+          "Shipping"
+        ],
+        "summary": "Gets the shipped orders list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Shipping/getValidCustomerShipMethodsList": {
+      "get": {
+        "tags": [
+          "Shipping"
+        ],
+        "summary": "Gets the valid customer ship methods list.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Shipping/GetSingleOrderShipConfirm": {
+      "get": {
+        "tags": [
+          "Shipping"
+        ],
+        "summary": "Gets the ship confirm by order.",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "in": "query",
+            "description": "The order number.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "markAsConfirmed",
+            "in": "query",
+            "description": "The mark as confirmed.",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v1/Shipping/getAllOrderShipConfirmsFilteredByDate": {
+      "get": {
+        "tags": [
+          "Shipping"
+        ],
+        "summary": "Gets all order ship confirms filtered by date.",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "The start date.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "The end date.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "markAsConfirmed",
+            "in": "query",
+            "description": "The mark as confirmed.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Microsoft.AspNetCore.Mvc.ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "VisionSuiteCoreServices.CQRS.Orders.OrderDetailsDto": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "description": "Gets or sets the order ID.",
+            "format": "int32"
+          },
+          "orderNumber": {
+            "type": "string",
+            "description": "Gets or sets the order number."
+          },
+          "orderDate": {
+            "type": "string",
+            "description": "Gets or sets the order date.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO for order details."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Inventory.AsnReceipt": {
+        "required": [
+          "customerAsnNumber",
+          "customerId",
+          "dateExpected",
+          "submittedBy",
+          "totalBoxesExpected",
+          "totalPalletsExpected"
+        ],
+        "type": "object",
+        "properties": {
+          "asnId": {
+            "type": "integer",
+            "description": "Gets or sets the asn identifier.",
+            "format": "int64"
+          },
+          "customerId": {
+            "type": "integer",
+            "description": "Gets or sets the customer identifier.",
+            "format": "int32"
+          },
+          "customerAsnNumber": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer asn number."
+          },
+          "dateExpected": {
+            "type": "string",
+            "description": "Gets or sets the date expected.",
+            "format": "date-time"
+          },
+          "inboundTrackingNumber": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the inbound tracking number.",
+            "nullable": true
+          },
+          "expiryDate": {
+            "type": "string",
+            "description": "Gets or sets the expiry date.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "totalBoxesExpected": {
+            "type": "integer",
+            "description": "Gets or sets the total boxes expected.",
+            "format": "int32",
+            "default": 0
+          },
+          "totalPalletsExpected": {
+            "type": "integer",
+            "description": "Gets or sets the total pallets expected.",
+            "format": "int32",
+            "default": 0
+          },
+          "warehouseId": {
+            "type": "integer",
+            "description": "Gets or sets the warehouse identifier.",
+            "format": "int32",
+            "default": 1,
+            "nullable": true
+          },
+          "submittedBy": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the submitted by."
+          },
+          "receiptItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Inventory.AsnReceiptItem"
+            },
+            "description": "Gets or sets the receipt items."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class AsnReceipt."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Inventory.AsnReceiptItem": {
+        "required": [
+          "partDescription",
+          "partNumber",
+          "quantityExpected",
+          "unitOfMeasure"
+        ],
+        "type": "object",
+        "properties": {
+          "asnItemId": {
+            "type": "integer",
+            "description": "Gets or sets the asn identifier.",
+            "format": "int64"
+          },
+          "fkAsnId": {
+            "type": "integer",
+            "description": "Gets or sets the asn identifier.",
+            "format": "int64"
+          },
+          "poReference": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer identifier.",
+            "nullable": true
+          },
+          "fkReceivedPurchaseOrderId": {
+            "type": "string",
+            "description": "Gets or sets the customer asn number.",
+            "nullable": true
+          },
+          "fkReceivedPurchaseOrderLineId": {
+            "type": "integer",
+            "description": "Gets or sets the fk received purchase order line identifier.",
+            "format": "int32",
+            "nullable": true
+          },
+          "partNumber": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the part number."
+          },
+          "partDescription": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the part description."
+          },
+          "erpDescription": {
+            "type": "string",
+            "description": "Gets or sets the erp description.",
+            "nullable": true
+          },
+          "quantityExpected": {
+            "type": "integer",
+            "description": "Gets or sets the quantity expected.",
+            "format": "int32",
+            "default": 0
+          },
+          "unitOfMeasure": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the unit of measure.",
+            "default": "ea"
+          },
+          "lotNumber": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the lot number.",
+            "nullable": true
+          },
+          "lotExpiryDate": {
+            "type": "string",
+            "description": "Gets or sets the lot expiry date.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "serialItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Inventory.AsnReceiptItemSerialItem"
+            },
+            "description": "Gets or sets the serial items."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class AsnReceiptItem."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Inventory.AsnReceiptItemSerialItem": {
+        "required": [
+          "serialNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "asnSerialId": {
+            "type": "integer",
+            "description": "Gets or sets the asn serial identifier.",
+            "format": "int64"
+          },
+          "fkAsnItemId": {
+            "type": "integer",
+            "description": "Gets or sets the fk asn item identifier.",
+            "format": "int64"
+          },
+          "fkAsnId": {
+            "type": "integer",
+            "description": "Gets or sets the fk asn item identifier.",
+            "format": "int64"
+          },
+          "serialNumber": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the serial number."
+          },
+          "lotNumber": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the lot number.",
+            "nullable": true
+          },
+          "unitNumber": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the unit number.",
+            "nullable": true
+          },
+          "palletNumber": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the pallet number.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class AsnReceiptItemSerialItem."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Order.OrderAddress": {
+        "required": [
+          "Address1",
+          "AddressType",
+          "City",
+          "Contact",
+          "Country",
+          "Email",
+          "OrderId",
+          "Phone",
+          "PostalCode",
+          "State"
+        ],
+        "type": "object",
+        "properties": {
+          "OrderId": {
+            "type": "integer",
+            "description": "Gets or sets the ms order identifier.",
+            "format": "int64",
+            "default": -1
+          },
+          "AddressType": {
+            "type": "integer",
+            "description": "Gets or sets the type of the address.",
+            "format": "int32",
+            "default": 1
+          },
+          "Contact": {
+            "maxLength": 400,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the contact."
+          },
+          "Company": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the company.",
+            "nullable": true
+          },
+          "Address1": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the address1."
+          },
+          "Address2": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the address2.",
+            "nullable": true
+          },
+          "Address3": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the address3.",
+            "nullable": true
+          },
+          "City": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the city."
+          },
+          "State": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the state."
+          },
+          "Country": {
+            "maxLength": 2,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the country.",
+            "default": "US"
+          },
+          "PostalCode": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the postal code."
+          },
+          "Phone": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the phone."
+          },
+          "Email": {
+            "maxLength": 250,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the email."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderAddress."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Order.OrderAmount": {
+        "required": [
+          "AmountType",
+          "AmountValue"
+        ],
+        "type": "object",
+        "properties": {
+          "OrderId": {
+            "type": "integer",
+            "description": "Gets or sets the ms order identifier.",
+            "format": "int64",
+            "default": -1
+          },
+          "AmountType": {
+            "type": "integer",
+            "description": "Gets or sets the type of the amount.",
+            "format": "int32"
+          },
+          "AmountValue": {
+            "type": "number",
+            "description": "Gets or sets the amount value.",
+            "format": "double",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderAmounts."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Order.OrderCustomField": {
+        "type": "object",
+        "properties": {
+          "OrderId": {
+            "type": "integer",
+            "description": "Gets or sets the ms order identifier.",
+            "format": "int64",
+            "default": -1
+          },
+          "OrderItemId": {
+            "type": "integer",
+            "description": "Gets or sets the order item identifier.",
+            "format": "int64",
+            "default": -1
+          },
+          "OrderCustomFieldType": {
+            "type": "integer",
+            "description": "Gets or sets the type of the order custom field.",
+            "format": "int32",
+            "default": 1
+          },
+          "CustomFieldMapId": {
+            "type": "integer",
+            "description": "Gets or sets the custom field map identifier.",
+            "format": "int32"
+          },
+          "OrderPartNumber": {
+            "type": "string",
+            "description": "Gets or sets the order part number identifier.",
+            "default": -1,
+            "nullable": true
+          },
+          "OrderPartDescription": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the order item."
+          },
+          "CustomFieldMapName": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the custom field map."
+          },
+          "CustomFieldValue": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the custom field value."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderCustomField."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Order.OrderInfo": {
+        "required": [
+          "AppointmentRequired",
+          "AsnRequired",
+          "CustomerId",
+          "DutyPaidBy",
+          "FreightTerm",
+          "OrderDate",
+          "OrderNumber",
+          "PartialShippingAllowed",
+          "PartiesRelated",
+          "ReturnLabelRequired",
+          "ReturnLabelService",
+          "RushOrder",
+          "ShipMethod",
+          "SignatureDelivery",
+          "SpecialHandling",
+          "SsccRequired"
+        ],
+        "type": "object",
+        "properties": {
+          "CustomerId": {
+            "type": "integer",
+            "description": "Gets or sets the customer identifier.",
+            "format": "int32",
+            "default": -1
+          },
+          "WarehouseId": {
+            "type": "integer",
+            "description": "Gets or sets the warehouse identifier.",
+            "format": "int32",
+            "default": 1
+          },
+          "OrderSourceId": {
+            "type": "integer",
+            "description": "Gets or sets the order source identifier.",
+            "format": "int32",
+            "default": 10
+          },
+          "OrderId": {
+            "type": "integer",
+            "description": "Gets or sets the master shipper order identifier.",
+            "format": "int64",
+            "default": -1
+          },
+          "OrderNumber": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the order number.",
+            "default": "",
+            "nullable": true
+          },
+          "OrderDate": {
+            "maxLength": 22,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the order date.",
+            "nullable": true
+          },
+          "FlowId": {
+            "type": "integer",
+            "description": "Gets or sets the flow identifier.",
+            "format": "int32",
+            "default": 1
+          },
+          "StatusId": {
+            "type": "integer",
+            "description": "Gets or sets the status identifier.",
+            "format": "int32",
+            "default": 1
+          },
+          "RequestedShipDate": {
+            "maxLength": 22,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the requested ship date.",
+            "nullable": true
+          },
+          "RequestedDeliveryDate": {
+            "maxLength": 22,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the requested delivery date.",
+            "nullable": true
+          },
+          "ShippedByDate": {
+            "maxLength": 22,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the shipped by date.",
+            "nullable": true
+          },
+          "RushOrder": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [rush order].",
+            "default": false
+          },
+          "Reference": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the reference.",
+            "nullable": true
+          },
+          "ShipMethod": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the ship method.",
+            "default": "USPS - First Class Package Service®",
+            "nullable": true
+          },
+          "ShipMethodId": {
+            "type": "integer",
+            "description": "Gets or sets the ship method identifier.",
+            "format": "int32",
+            "default": 3
+          },
+          "PoNumber": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the po number.",
+            "nullable": true
+          },
+          "FreightTerm": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the freight term.",
+            "default": "Prepaid",
+            "nullable": true
+          },
+          "FreightTermId": {
+            "type": "integer",
+            "description": "Gets or sets the freight term identifier.",
+            "format": "int32",
+            "default": 1
+          },
+          "PartiesRelated": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [parties related].",
+            "default": false
+          },
+          "FreightAccount": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the freight account.",
+            "nullable": true
+          },
+          "SalesOrderId": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the sales order identifier.",
+            "nullable": true
+          },
+          "DepartmentId": {
+            "type": "integer",
+            "description": "Gets or sets the department identifier.",
+            "format": "int32",
+            "default": 0
+          },
+          "PaymentId": {
+            "type": "integer",
+            "description": "Gets or sets the payment identifier.",
+            "format": "int32",
+            "default": 0
+          },
+          "SubmittedBy": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the submitted by.",
+            "nullable": true
+          },
+          "DutyPaidBy": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the duty paid by.",
+            "default": "Recipient",
+            "nullable": true
+          },
+          "DutyPaidById": {
+            "type": "integer",
+            "description": "Gets or sets the duty paid by identifier.",
+            "format": "int32",
+            "default": 2
+          },
+          "DutyPaidAccountNo": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the duty paid account no.",
+            "nullable": true
+          },
+          "ItnNumber": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the itn number.",
+            "nullable": true
+          },
+          "SignatureDelivery": {
+            "type": "integer",
+            "description": "Gets or sets the signature delivery.",
+            "format": "int32",
+            "default": 0
+          },
+          "ReturnLabelService": {
+            "type": "integer",
+            "description": "Gets or sets the return label service.",
+            "format": "int32",
+            "default": 0
+          },
+          "SpecialHandling": {
+            "type": "integer",
+            "description": "Gets or sets the special handling.",
+            "format": "int32",
+            "default": 0
+          },
+          "AppointmentRequired": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [appointment required].",
+            "default": false
+          },
+          "AsnRequired": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [asn required].",
+            "default": false
+          },
+          "SsccRequired": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [SSCC required].",
+            "default": false
+          },
+          "ReturnLabelRequired": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [return label required].",
+            "default": false
+          },
+          "PartialShippingAllowed": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [partial shipping allowed].",
+            "default": false
+          },
+          "Comments": {
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the comments.",
+            "nullable": true
+          },
+          "OrderFilePath": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the order file path.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderHeader."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Order.OrderItem": {
+        "required": [
+          "PartDescription",
+          "PartNumber",
+          "Quantity",
+          "UnitPrice",
+          "UnitWeight",
+          "WeightUnitOfMeasure"
+        ],
+        "type": "object",
+        "properties": {
+          "OrderId": {
+            "type": "integer",
+            "description": "Gets or sets the master shipper unique order identifier.",
+            "format": "int64",
+            "default": -1
+          },
+          "OrderItemId": {
+            "type": "integer",
+            "description": "Gets or sets the order item identifier.",
+            "format": "int64",
+            "default": -1
+          },
+          "PartNumber": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the item identifier (OrderItemId Number).",
+            "nullable": true
+          },
+          "AltPartNumber": {
+            "type": "string",
+            "description": "Gets or sets the alternate item identifier (alternate Part Number).",
+            "nullable": true
+          },
+          "PartDescription": {
+            "maxLength": 300,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the item description.",
+            "nullable": true
+          },
+          "Quantity": {
+            "type": "integer",
+            "description": "Gets or sets the quantity.",
+            "format": "int32"
+          },
+          "UnitPrice": {
+            "type": "number",
+            "description": "Gets or sets the unit price.",
+            "format": "double",
+            "default": 0
+          },
+          "UnitWeight": {
+            "type": "number",
+            "description": "Gets or sets the unit weight in ounces",
+            "format": "double",
+            "default": 16
+          },
+          "WeightUnitOfMeasure": {
+            "type": "string",
+            "description": "Gets or sets the weight unit of measure.",
+            "default": "ounce",
+            "nullable": true
+          },
+          "CommodityCode": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the commodity code.",
+            "nullable": true
+          },
+          "CountryOfOrigin": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the country of origin.",
+            "default": "US",
+            "nullable": true
+          },
+          "LineItemNumber": {
+            "type": "integer",
+            "description": "Gets or sets the line item number.",
+            "format": "int32"
+          },
+          "CustomerLineId": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer line item number.",
+            "nullable": true
+          },
+          "Eccn": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the Export Control Classification Number {ECCN}.",
+            "nullable": true
+          },
+          "CustomFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.OrderCustomField"
+            },
+            "description": "Gets or sets the custom fields.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderItem."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Order.WebOrder": {
+        "required": [
+          "AddressInfo",
+          "OrderAmounts",
+          "OrderInfo",
+          "OrderItems"
+        ],
+        "type": "object",
+        "properties": {
+          "OrderInfo": {
+            "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.OrderInfo"
+          },
+          "AddressInfo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.OrderAddress"
+            },
+            "description": "Gets or sets the ship address, and so on.",
+            "nullable": true
+          },
+          "CustomFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.OrderCustomField"
+            },
+            "description": "Gets or sets the custom fields.",
+            "nullable": true
+          },
+          "OrderItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.OrderItem"
+            },
+            "description": "Gets or sets the order items.",
+            "nullable": true
+          },
+          "OrderAmounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Order.OrderAmount"
+            },
+            "description": "Gets or sets the order amounts.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class WebOrder."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Returns.RmaOrder": {
+        "required": [
+          "RmaOrderInfo",
+          "RmaOrderItems"
+        ],
+        "type": "object",
+        "properties": {
+          "RmaOrderInfo": {
+            "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Returns.RmaOrderInfo"
+          },
+          "RmaOrderItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.DAL.DAOs.Returns.RmaOrderItem"
+            },
+            "description": "Gets or sets the rma order items."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class RmaOrder."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Returns.RmaOrderInfo": {
+        "required": [
+          "AuthorizedDate",
+          "CustomerId",
+          "CustomerRmaNumber",
+          "ExpirationDate",
+          "RmaReturnReason"
+        ],
+        "type": "object",
+        "properties": {
+          "RmaOrderId": {
+            "type": "integer",
+            "description": "Gets or sets the rma order identifier.",
+            "format": "int32",
+            "default": "-1"
+          },
+          "CustomerId": {
+            "type": "integer",
+            "description": "Gets or sets the customer identifier.",
+            "format": "int32"
+          },
+          "CustomerRmaNumber": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer rma number."
+          },
+          "RmaReturnReason": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the rma return reason.",
+            "default": ""
+          },
+          "AuthorizedDate": {
+            "maxLength": 22,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the authorized date."
+          },
+          "ExpirationDate": {
+            "maxLength": 22,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the expiration date."
+          },
+          "RmaReference": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the rma reference.",
+            "default": "",
+            "nullable": true
+          },
+          "RmaPoNumber": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the rma po number.",
+            "default": "",
+            "nullable": true
+          },
+          "RmaComments": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the rma comments.",
+            "default": "",
+            "nullable": true
+          },
+          "OriginalOrderNumber": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the original order number.",
+            "nullable": true
+          },
+          "CustomerName": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the customer.",
+            "nullable": true
+          },
+          "CompanyName": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the company.",
+            "default": "",
+            "nullable": true
+          },
+          "CustomerAddress": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer address.",
+            "default": "",
+            "nullable": true
+          },
+          "CustomerCity": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer city.",
+            "default": "",
+            "nullable": true
+          },
+          "CustomerZip": {
+            "maxLength": 30,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer zip.",
+            "default": "",
+            "nullable": true
+          },
+          "CustomerStateName": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the customer state.",
+            "default": "",
+            "nullable": true
+          },
+          "CustomerStateId": {
+            "type": "integer",
+            "description": "Gets or sets the customer state identifier.",
+            "format": "int32",
+            "default": "-1"
+          },
+          "CustomerCountryName": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the customer country.",
+            "default": "",
+            "nullable": true
+          },
+          "CustomerCountryId": {
+            "type": "integer",
+            "description": "Gets or sets the customer country identifier.",
+            "format": "int32",
+            "default": "-1"
+          },
+          "CustomerIso3166_2_CountryCode": {
+            "maxLength": 2,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer iso3166 2 character country code.",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class RmaOrderInfo."
+      },
+      "VisionSuiteCoreServices.DAL.DAOs.Returns.RmaOrderItem": {
+        "required": [
+          "PartNumber",
+          "Quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "RmaOrderId": {
+            "type": "integer",
+            "description": "Gets or sets the rma order identifier.",
+            "format": "int32",
+            "default": "-1"
+          },
+          "RmaOrderLineId": {
+            "type": "integer",
+            "description": "Gets or sets the rma order line identifier.",
+            "format": "int32",
+            "default": "-1"
+          },
+          "CustomerLineId": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the customer line identifier."
+          },
+          "PartNumber": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the item identifier (Part Number)."
+          },
+          "PartDescription": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the item (Part Description).",
+            "nullable": true
+          },
+          "Quantity": {
+            "type": "integer",
+            "description": "Gets or sets the quantity.",
+            "format": "int32"
+          },
+          "UnitPrice": {
+            "type": "number",
+            "description": "Gets or sets the unit price.",
+            "format": "double",
+            "default": 0
+          },
+          "ExtendedPrice": {
+            "type": "number",
+            "description": "Gets or sets the unit price.",
+            "format": "double",
+            "default": 0
+          },
+          "RmaConditionName": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the ret condition.",
+            "default": "",
+            "nullable": true
+          },
+          "RmaConditionId": {
+            "type": "integer",
+            "description": "Gets or sets the ret condition identifier.",
+            "format": "int32",
+            "default": 0
+          },
+          "RmaDispositionName": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Gets or sets the name of the ret disposition.",
+            "default": "",
+            "nullable": true
+          },
+          "RmaDispositionId": {
+            "type": "integer",
+            "description": "Gets or sets the ret disposition identifier.",
+            "format": "int32",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class RmaOrderItem."
+      }
+    },
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "OAuth2 using AuthorizationCode Flow with Azure AD",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.microsoftonline.com/7dbf1f94-33d7-4dd3-9558-6aee7321b854/oauth2/v2.0/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/7dbf1f94-33d7-4dd3-9558-6aee7321b854/oauth2/v2.0/token",
+            "scopes": {
+              "api://c1205c68-bb1b-41b5-9fcc-54e5aaaeb1fd/access_as_user": "Access the API as user"
+            }
+          }
+        }
+      },
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "API Key authentication via X-Api-Key header",
+        "name": "X-Api-Key",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "oauth2": [
+        "api://c1205c68-bb1b-41b5-9fcc-54e5aaaeb1fd/access_as_user"
+      ]
+    },
+    {
+      "ApiKey": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Inventory"
+    },
+    {
+      "name": "Order"
+    },
+    {
+      "name": "Return"
+    },
+    {
+      "name": "Rma"
+    },
+    {
+      "name": "Serial"
+    },
+    {
+      "name": "Shipping"
+    }
+  ]
+}

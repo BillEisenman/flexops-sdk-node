@@ -1,0 +1,63 @@
+{
+  "name": "@flexops/sdk",
+  "version": "1.0.1",
+  "description": "Official FlexOps Platform Node.js/TypeScript SDK — multi-carrier shipping, order management, and logistics API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "preprocess": "node scripts/preprocess-specs.mjs",
+    "generate": "bash scripts/generate.sh",
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "flexops",
+    "shipping",
+    "logistics",
+    "usps",
+    "ups",
+    "fedex",
+    "dhl",
+    "labels",
+    "tracking",
+    "ecommerce",
+    "multi-carrier",
+    "api-client",
+    "sdk"
+  ],
+  "author": "FlexOps, LLC",
+  "license": "MIT",
+  "homepage": "https://flexops.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BillEisenman/flexops-sdk-node.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.16.3",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

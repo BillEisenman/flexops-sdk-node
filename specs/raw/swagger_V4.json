@@ -1,0 +1,1993 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "FlexOps API - Core Services Documentation",
+    "description": "FlexOps Logistics and Fulfillment API   [DEV - v1.2.9246.6531]",
+    "termsOfService": "https://localhost:3443/legal/terms-of-service#api-terms",
+    "contact": {
+      "name": "Support",
+      "url": "https://www.flexops.io/",
+      "email": "support@flexops.io"
+    },
+    "version": "4.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:7190"
+    }
+  ],
+  "paths": {
+    "/api/v4/Analytics/ShipmentsTrend": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ShipmentTrendResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ShipmentTrendResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ShipmentTrendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/CarrierSummary": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CarrierSummaryResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CarrierSummaryResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CarrierSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/TopDestinations": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopDestinationsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopDestinationsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopDestinationsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/InventoryMetrics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.InventoryMetricsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.InventoryMetricsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.InventoryMetricsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/StockByWarehouse": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Gets stock levels by warehouse.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.StockByWarehouseResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.StockByWarehouseResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.StockByWarehouseResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/StockLevelsByCategory": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Gets stock levels by category.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.StockLevelsByCategoryResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.StockLevelsByCategoryResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.StockLevelsByCategoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/OrderMetrics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderMetricsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderMetricsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderMetricsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/OrderTrend": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderTrendResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderTrendResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderTrendResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/TopSellingProducts": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopSellingProductsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopSellingProductsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopSellingProductsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/OrderStatusDistribution": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Gets the order status distribution for a date range.",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "description": "The start date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "The end date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderStatusDistributionResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderStatusDistributionResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderStatusDistributionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/CustomerMetrics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CustomerMetricsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CustomerMetricsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CustomerMetricsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/CustomerAcquisitionTrend": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CustomerAcquisitionTrendResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CustomerAcquisitionTrendResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CustomerAcquisitionTrendResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/TopCustomers": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopCustomersResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopCustomersResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TopCustomersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/ReturnsMetrics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnsMetricsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnsMetricsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnsMetricsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/ReturnsTrend": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnsTrendResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnsTrendResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnsTrendResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/ReturnReasons": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnReasonsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnReasonsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReturnReasonsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/PerformanceMetrics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.PerformanceMetricsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.PerformanceMetricsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.PerformanceMetricsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/FulfillmentTrend": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.FulfillmentTrendResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.FulfillmentTrendResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.FulfillmentTrendResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/CarrierPerformance": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CarrierPerformanceResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CarrierPerformanceResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CarrierPerformanceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/ShippingCostAnalytics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Gets shipping cost analytics for a date range.",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "description": "The start date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "The end date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ShippingCostAnalyticsResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ShippingCostAnalyticsResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ShippingCostAnalyticsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Analytics/DeliveryPerformance": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Gets delivery performance analytics for a date range.",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "description": "The start date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "The end date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.DeliveryPerformanceResponse"
+                }
+              },
+              "application/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.DeliveryPerformanceResponse"
+                }
+              },
+              "text/json; x-media-version=4.0": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.DeliveryPerformanceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "AnalyticsRead"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v4/Observability/status": {
+      "get": {
+        "tags": [
+          "Observability"
+        ],
+        "summary": "Gets the status.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Microsoft.AspNetCore.Mvc.ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "VisionSuiteCoreServices.Models.Analytics.CarrierPerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "The metrics."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class CarrierPerformanceResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.CarrierSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "carrierCounts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "The carrier counts."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class CarrierSummaryResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.CustomerAcquisitionTrendResponse": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TrendPoint"
+            },
+            "description": "The points."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class CustomerAcquisitionTrendResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.CustomerInfo": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "description": "The customer identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name."
+          },
+          "lifetimeValue": {
+            "type": "number",
+            "description": "The lifetime value.",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class CustomerInfo."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.CustomerMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "The metrics."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class CustomerMetricsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.DeliveryPerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "totalDeliveries": {
+            "type": "integer",
+            "description": "The total number of deliveries.",
+            "format": "int32"
+          },
+          "deliveredCount": {
+            "type": "integer",
+            "description": "The number of successfully delivered shipments.",
+            "format": "int32"
+          },
+          "inTransitCount": {
+            "type": "integer",
+            "description": "The number of shipments in transit.",
+            "format": "int32"
+          },
+          "delayedCount": {
+            "type": "integer",
+            "description": "The number of delayed shipments.",
+            "format": "int32"
+          },
+          "onTimeDeliveryRate": {
+            "type": "number",
+            "description": "The on-time delivery rate (0.0 to 1.0).",
+            "format": "double"
+          },
+          "statusBreakdown": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Breakdown of deliveries by status."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class DeliveryPerformanceResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.DestinationInfo": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "description": "The destination."
+          },
+          "count": {
+            "type": "integer",
+            "description": "The count.",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class DestinationInfo."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.FulfillmentTrendResponse": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TrendPoint"
+            },
+            "description": "The points."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class FulfillmentTrendResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.InventoryMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "The metrics."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class InventoryMetricsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.OrderMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "The metrics."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderMetricsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.OrderStatusCount": {
+        "type": "object",
+        "properties": {
+          "statusId": {
+            "type": "integer",
+            "description": "The status identifier.",
+            "format": "int32"
+          },
+          "statusName": {
+            "type": "string",
+            "description": "The status name."
+          },
+          "count": {
+            "type": "integer",
+            "description": "The count of orders with this status.",
+            "format": "int32"
+          },
+          "percentage": {
+            "type": "number",
+            "description": "The percentage of total orders.",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderStatusCount."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.OrderStatusDistributionResponse": {
+        "type": "object",
+        "properties": {
+          "totalOrders": {
+            "type": "integer",
+            "description": "The total number of orders.",
+            "format": "int32"
+          },
+          "statusCounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.OrderStatusCount"
+            },
+            "description": "The count of orders by status."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderStatusDistributionResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.OrderTrendResponse": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TrendPoint"
+            },
+            "description": "The points."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class OrderTrendResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.PerformanceMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "The metrics."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class PerformanceMetricsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.ProductInfo": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "description": "The product identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name."
+          },
+          "quantitySold": {
+            "type": "integer",
+            "description": "The quantity sold.",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class ProductInfo."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.ReasonInfo": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "The reason."
+          },
+          "count": {
+            "type": "integer",
+            "description": "The count.",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class ReasonInfo."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.ReturnReasonsResponse": {
+        "type": "object",
+        "properties": {
+          "reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ReasonInfo"
+            },
+            "description": "The reasons."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class ReturnReasonsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.ReturnsMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "The metrics."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class ReturnsMetricsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.ReturnsTrendResponse": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TrendPoint"
+            },
+            "description": "The points."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class ReturnsTrendResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.ShipmentTrendResponse": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.TrendPoint"
+            },
+            "description": "The points."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class ShipmentTrendResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.ShippingCostAnalyticsResponse": {
+        "type": "object",
+        "properties": {
+          "totalEstimatedCost": {
+            "type": "number",
+            "description": "The total estimated shipping cost.",
+            "format": "double"
+          },
+          "totalActualCost": {
+            "type": "number",
+            "description": "The total actual shipping cost.",
+            "format": "double"
+          },
+          "costVariance": {
+            "type": "number",
+            "description": "The variance between estimated and actual costs.",
+            "format": "double"
+          },
+          "shipmentCount": {
+            "type": "integer",
+            "description": "The total number of shipments.",
+            "format": "int32"
+          },
+          "averageEstimatedCost": {
+            "type": "number",
+            "description": "The average estimated cost per shipment.",
+            "format": "double"
+          },
+          "averageActualCost": {
+            "type": "number",
+            "description": "The average actual cost per shipment.",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class ShippingCostAnalyticsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.StockByWarehouseResponse": {
+        "type": "object",
+        "properties": {
+          "warehouses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.WarehouseStockInfo"
+            },
+            "description": "The list of warehouse stock information."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class StockByWarehouseResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.StockLevelsByCategoryResponse": {
+        "type": "object",
+        "properties": {
+          "stockLevels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "The stock levels."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class StockLevelsByCategoryResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.TopCustomersResponse": {
+        "type": "object",
+        "properties": {
+          "customers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.CustomerInfo"
+            },
+            "description": "The customers."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class TopCustomersResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.TopDestinationsResponse": {
+        "type": "object",
+        "properties": {
+          "destinations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.DestinationInfo"
+            },
+            "description": "The destinations."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class TopDestinationsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.TopSellingProductsResponse": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisionSuiteCoreServices.Models.Analytics.ProductInfo"
+            },
+            "description": "The products."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class TopSellingProductsResponse."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.TrendPoint": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "description": "The timestamp.",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "number",
+            "description": "The value.",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class TrendPoint."
+      },
+      "VisionSuiteCoreServices.Models.Analytics.WarehouseStockInfo": {
+        "type": "object",
+        "properties": {
+          "warehouseId": {
+            "type": "integer",
+            "description": "The warehouse identifier.",
+            "format": "int32"
+          },
+          "warehouseName": {
+            "type": "string",
+            "description": "The warehouse name."
+          },
+          "totalStock": {
+            "type": "integer",
+            "description": "The total stock in the warehouse.",
+            "format": "int64"
+          },
+          "allocatedStock": {
+            "type": "integer",
+            "description": "The allocated stock.",
+            "format": "int64"
+          },
+          "availableStock": {
+            "type": "integer",
+            "description": "The available stock.",
+            "format": "int64"
+          },
+          "uniqueSkuCount": {
+            "type": "integer",
+            "description": "The number of unique SKUs in the warehouse.",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class WarehouseStockInfo."
+      }
+    },
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "OAuth2 using AuthorizationCode Flow with Azure AD",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.microsoftonline.com/7dbf1f94-33d7-4dd3-9558-6aee7321b854/oauth2/v2.0/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/7dbf1f94-33d7-4dd3-9558-6aee7321b854/oauth2/v2.0/token",
+            "scopes": {
+              "api://c1205c68-bb1b-41b5-9fcc-54e5aaaeb1fd/access_as_user": "Access the API as user"
+            }
+          }
+        }
+      },
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "API Key authentication via X-Api-Key header",
+        "name": "X-Api-Key",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "oauth2": [
+        "api://c1205c68-bb1b-41b5-9fcc-54e5aaaeb1fd/access_as_user"
+      ]
+    },
+    {
+      "ApiKey": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Analytics"
+    },
+    {
+      "name": "Observability"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+specs/
+scripts/
+tests/
+src/
+.github/
+*.tgz
+tsconfig.json
+openapitools.json
+vitest.config.ts
+.eslintrc.*

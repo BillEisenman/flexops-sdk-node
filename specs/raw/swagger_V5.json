@@ -1,0 +1,177 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "FlexOps API - Core Services Documentation",
+    "description": "FlexOps Logistics and Fulfillment API   [DEV - v1.2.9246.6531]",
+    "termsOfService": "https://localhost:3443/legal/terms-of-service#api-terms",
+    "contact": {
+      "name": "Support",
+      "url": "https://www.flexops.io/",
+      "email": "support@flexops.io"
+    },
+    "version": "5.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:7190"
+    }
+  ],
+  "paths": {
+    "/api/v5/LabelUsage/GetUsageSummary/summary": {
+      "get": {
+        "tags": [
+          "LabelUsage"
+        ],
+        "summary": "Gets the current usage summary for the workspace (from Redis).",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v5/LabelUsage/GetUsageHistory/history": {
+      "get": {
+        "tags": [
+          "LabelUsage"
+        ],
+        "summary": "Gets paginated label usage history from the audit log (ZenithDB).",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Optional start date filter (UTC).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Optional end date filter (UTC).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (1-based, default 1).",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Page size (default 25, max 100).",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v5/LabelUsage/GetOverageDetails/overage": {
+      "get": {
+        "tags": [
+          "LabelUsage"
+        ],
+        "summary": "Gets the overage cost breakdown for the current billing period by source.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "ApiKeyPolicy"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "OAuth2 using AuthorizationCode Flow with Azure AD",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.microsoftonline.com/7dbf1f94-33d7-4dd3-9558-6aee7321b854/oauth2/v2.0/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/7dbf1f94-33d7-4dd3-9558-6aee7321b854/oauth2/v2.0/token",
+            "scopes": {
+              "api://c1205c68-bb1b-41b5-9fcc-54e5aaaeb1fd/access_as_user": "Access the API as user"
+            }
+          }
+        }
+      },
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "API Key authentication via X-Api-Key header",
+        "name": "X-Api-Key",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "oauth2": [
+        "api://c1205c68-bb1b-41b5-9fcc-54e5aaaeb1fd/access_as_user"
+      ]
+    },
+    {
+      "ApiKey": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "LabelUsage"
+    }
+  ]
+}
