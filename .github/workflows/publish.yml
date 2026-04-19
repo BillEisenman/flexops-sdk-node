@@ -1,18 +1,31 @@
 name: Publish to npm
 
-# Publish to registry.npmjs.org when a vX.Y.Z tag is pushed.
-# Secret required (GitHub → Settings → Secrets → Actions):
-#   NPM_TOKEN — an npm Automation token with publish scope for @flexops/sdk
+# Publishes @flexops/sdk to registry.npmjs.org via npm trusted publishing
+# (OIDC) — no stored token, no MFA prompt. Triggered on vX.Y.Z tag push or
+# manual workflow_dispatch.
+#
+# One-time setup on npmjs.com (required before the first run):
+#   1. Log in to npmjs.com → package @flexops/sdk → Settings → Trusted Publishers
+#   2. Add a GitHub Actions trusted publisher with:
+#        Organization or user: BillEisenman
+#        Repository:           flexops-sdk-node
+#        Workflow filename:    publish.yml
+#        Environment:          (leave blank)
+#   3. Ensure the npm account's 2FA mode is compatible — trusted publishing
+#      bypasses the OTP-on-publish prompt because auth comes from the
+#      verifiable OIDC token issued by GitHub, not from a stored secret.
+#
+# Docs: https://docs.npmjs.com/trusted-publishers
 
 on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_dispatch:  # manual button for re-publish of an existing tag
+  workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write   # required for npm provenance attestation
+  id-token: write   # required to mint the OIDC token GitHub → npm exchanges
 
 jobs:
   publish:
@@ -20,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # needed for provenance to find the tagged commit
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -46,7 +59,7 @@ jobs:
             exit 1
           fi
 
-      - name: Publish
+      - name: Publish (OIDC trusted publisher)
         run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # No NODE_AUTH_TOKEN env var. npm CLI 11.5+ detects the GitHub
+        # OIDC context and exchanges it for a short-lived registry token.
