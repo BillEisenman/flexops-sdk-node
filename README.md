@@ -446,4 +446,4 @@ npm run build
 
 ## License
 
-Proprietary - FlexOps, LLC. All rights reserved.
+MIT © FlexOps, LLC. See [LICENSE](LICENSE) for full text.
