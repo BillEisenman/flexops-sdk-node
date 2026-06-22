@@ -59,6 +59,9 @@ jobs:
             exit 1
           fi
 
+      - name: Ensure npm supports OIDC publishing
+        run: npm install -g npm@latest
+
       - name: Publish (OIDC trusted publisher)
         run: npm publish --access public --provenance
         # No NODE_AUTH_TOKEN env var. npm CLI 11.5+ detects the GitHub
