@@ -59,6 +59,26 @@ jobs:
             exit 1
           fi
 
+      - name: Smoke-check package exports resolve
+        run: |
+          set -e
+          cat > "$RUNNER_TEMP/check-exports.mjs" <<'EOF'
+          import { readFileSync, existsSync } from 'node:fs';
+          import { createRequire } from 'node:module';
+          import { resolve } from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const map = JSON.parse(readFileSync('./package.json','utf8')).exports['.'];
+          const rel = p => p.replace(/^\.\//,'');
+          let bad = 0;
+          for (const t of new Set(Object.values(map)))
+            if (!existsSync(rel(t))) { console.error('::error::exports target missing: ' + t); bad++; }
+          if (bad) process.exit(1);
+          await import(pathToFileURL(resolve(rel(map.import))).href);   // ESM entry must import
+          createRequire(import.meta.url)(resolve(rel(map.require)));    // CJS entry must require
+          console.log('exports OK: import=' + map.import + ' require=' + map.require);
+          EOF
+          node "$RUNNER_TEMP/check-exports.mjs"
+
       - name: Ensure npm supports OIDC publishing
         run: npm install -g npm@latest
 
