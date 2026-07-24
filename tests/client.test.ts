@@ -85,11 +85,16 @@ describe('FlexOps Client', () => {
 
   describe('shipping', () => {
     it('gets rates', async () => {
-      const rates = [
-        { carrier: 'USPS', service: 'Priority Mail', rate: 8.5, currency: 'USD', estimatedDays: 2 },
-        { carrier: 'UPS', service: 'Ground', rate: 12.3, currency: 'USD', estimatedDays: 5 },
-      ];
-      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: rates }));
+      // api/shipping/rates returns a raw RateShoppingResponse (no {success,data} envelope).
+      mockFetch.mockReturnValueOnce(
+        jsonResponse({
+          currency: 'USD',
+          rates: [
+            { carrierCode: 'USPS', carrierName: 'USPS', serviceCode: 'PRIORITY', serviceName: 'Priority Mail', rate: 8.5, currency: 'USD', estimatedDays: 2 },
+            { carrierCode: 'UPS', carrierName: 'UPS', serviceCode: 'GROUND', serviceName: 'Ground', rate: 12.3, currency: 'USD', estimatedDays: 5 },
+          ],
+        }),
+      );
 
       const client = createClient();
       const result = await client.shipping.getRates({
@@ -99,20 +104,18 @@ describe('FlexOps Client', () => {
         weightUnit: 'oz',
       });
 
-      expect(result.data).toHaveLength(2);
-      expect(result.data?.[0]?.carrier).toBe('USPS');
+      expect(result.rates).toHaveLength(2);
+      expect(result.rates[0]?.carrierCode).toBe('USPS');
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:5000/api/workspaces/ws-test-001/shipping/rates',
+        'http://localhost:5000/api/shipping/rates',
         expect.objectContaining({ method: 'POST' }),
       );
     });
 
     it('gets cheapest rate', async () => {
+      // Raw ShippingRate (no envelope).
       mockFetch.mockReturnValueOnce(
-        jsonResponse({
-          success: true,
-          data: { carrier: 'USPS', service: 'Ground Advantage', rate: 5.25, currency: 'USD', estimatedDays: 4 },
-        }),
+        jsonResponse({ carrierCode: 'USPS', carrierName: 'USPS', serviceCode: 'GROUND_ADVANTAGE', serviceName: 'Ground Advantage', rate: 5.25, currency: 'USD', estimatedDays: 4 }),
       );
 
       const client = createClient();
@@ -122,16 +125,12 @@ describe('FlexOps Client', () => {
         weight: 8,
       });
 
-      expect(result.data?.rate).toBe(5.25);
+      expect(result.rate).toBe(5.25);
     });
 
     it('validates an address', async () => {
-      mockFetch.mockReturnValueOnce(
-        jsonResponse({
-          success: true,
-          data: { isValid: true, messages: [] },
-        }),
-      );
+      // Raw AddressValidationResult (no envelope).
+      mockFetch.mockReturnValueOnce(jsonResponse({ isValid: true, messages: [] }));
 
       const client = createClient();
       const result = await client.shipping.validateAddress({
@@ -143,27 +142,29 @@ describe('FlexOps Client', () => {
         country: 'US',
       });
 
-      expect(result.data?.isValid).toBe(true);
+      expect(result.isValid).toBe(true);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5000/api/shipping/addresses/validate',
+        expect.objectContaining({ method: 'POST' }),
+      );
     });
 
     it('tracks a shipment', async () => {
+      // Raw tracking object (no envelope).
       mockFetch.mockReturnValueOnce(
         jsonResponse({
-          success: true,
-          data: {
-            trackingNumber: '9400111899223456789012',
-            carrier: 'USPS',
-            status: 'In Transit',
-            events: [{ timestamp: '2026-03-04T10:00:00Z', status: 'Departed', description: 'Left facility' }],
-          },
+          trackingNumber: '9400111899223456789012',
+          carrier: 'USPS',
+          status: 'In Transit',
+          events: [{ timestamp: '2026-03-04T10:00:00Z', status: 'Departed', description: 'Left facility' }],
         }),
       );
 
       const client = createClient();
       const result = await client.shipping.track('9400111899223456789012');
 
-      expect(result.data?.carrier).toBe('USPS');
-      expect(result.data?.events).toHaveLength(1);
+      expect(result.carrier).toBe('USPS');
+      expect(result.events).toHaveLength(1);
     });
   });
 

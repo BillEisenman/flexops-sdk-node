@@ -11,6 +11,7 @@ import type {
   ApiResponse,
   RateRequest,
   ShippingRate,
+  RateShoppingResponse,
   CreateLabelRequest,
   Label,
   TrackingInfo,
@@ -42,32 +43,38 @@ export class ShippingResource {
   // -----------------------------------------------------------------------
 
   /** Get shipping rates from all configured carriers. */
-  async getRates(request: RateRequest): Promise<ApiResponse<ShippingRate[]>> {
-    return this.http.post(this.wsPath('shipping/rates'), request);
+  async getRates(request: RateRequest): Promise<RateShoppingResponse> {
+    return this.http.post('/api/shipping/rates', request);
   }
 
   /** Get the single cheapest rate across all carriers. */
-  async getCheapestRate(request: RateRequest): Promise<ApiResponse<ShippingRate>> {
-    return this.http.post(this.wsPath('shipping/rates/cheapest'), request);
+  async getCheapestRate(request: RateRequest): Promise<ShippingRate> {
+    return this.http.post('/api/shipping/rates/cheapest', request);
   }
 
   /** Get the single fastest rate across all carriers. */
-  async getFastestRate(request: RateRequest): Promise<ApiResponse<ShippingRate>> {
-    return this.http.post(this.wsPath('shipping/rates/fastest'), request);
+  async getFastestRate(request: RateRequest): Promise<ShippingRate> {
+    return this.http.post('/api/shipping/rates/fastest', request);
   }
 
   // -----------------------------------------------------------------------
   // Labels
   // -----------------------------------------------------------------------
 
-  /** Create a shipping label. */
-  async createLabel(request: CreateLabelRequest): Promise<ApiResponse<Label>> {
-    return this.http.post(this.wsPath('shipping/labels'), request, undefined);
+  /**
+   * Create a shipping label. Supply a `CreateLabelRequest` with `orderId` set to buy against an
+   * existing order — the order's ownership, status, ship-method and addresses are validated
+   * server-side and postage is settled atomically. Returns the raw label (HTTP 201).
+   */
+  async createLabel(request: CreateLabelRequest): Promise<Label> {
+    return this.http.post('/api/shipping/labels', request, undefined);
   }
 
-  /** Cancel (void) a shipping label. */
-  async cancelLabel(labelId: string): Promise<ApiResponse<unknown>> {
-    return this.http.delete(this.wsPath(`shipping/labels/${labelId}`));
+  /** Cancel (void) a shipping label. `carrierCode` is required. */
+  async cancelLabel(labelId: string, carrierCode: string): Promise<unknown> {
+    return this.http.delete(
+      `/api/shipping/labels/${labelId}?carrierCode=${encodeURIComponent(carrierCode)}`,
+    );
   }
 
   // -----------------------------------------------------------------------
@@ -75,8 +82,8 @@ export class ShippingResource {
   // -----------------------------------------------------------------------
 
   /** Track a shipment by tracking number. */
-  async track(trackingNumber: string): Promise<ApiResponse<TrackingInfo>> {
-    return this.http.get(this.wsPath(`shipping/track/${trackingNumber}`));
+  async track(trackingNumber: string): Promise<TrackingInfo> {
+    return this.http.get(`/api/shipping/track/${encodeURIComponent(trackingNumber)}`);
   }
 
   // -----------------------------------------------------------------------
@@ -84,8 +91,8 @@ export class ShippingResource {
   // -----------------------------------------------------------------------
 
   /** Validate and correct a shipping address. */
-  async validateAddress(address: Address): Promise<ApiResponse<AddressValidationResult>> {
-    return this.http.post(this.wsPath('shipping/addresses/validate'), address);
+  async validateAddress(address: Address): Promise<AddressValidationResult> {
+    return this.http.post('/api/shipping/addresses/validate', address);
   }
 
   // -----------------------------------------------------------------------
@@ -117,8 +124,8 @@ export class ShippingResource {
   // -----------------------------------------------------------------------
 
   /** List available carriers and their services. */
-  async getCarriers(): Promise<ApiResponse<unknown>> {
-    return this.http.get(this.wsPath('shipping/carriers'));
+  async getCarriers(): Promise<unknown> {
+    return this.http.get('/api/shipping/carriers');
   }
 
   // -----------------------------------------------------------------------
@@ -128,19 +135,19 @@ export class ShippingResource {
   /** Get AI-ranked carrier recommendations for a lane, scored by cost, speed, and reliability. */
   async getRecommendations(
     request: CarrierRecommendationRequest,
-  ): Promise<ApiResponse<CarrierRecommendationResponse>> {
-    return this.http.post(this.wsPath('shipping/recommendations'), request);
+  ): Promise<CarrierRecommendationResponse> {
+    return this.http.post('/api/shipping/recommendations', request);
   }
 
   /** Predict delivery dates (P25/P50/P75/P95) for a carrier/service/lane combination. */
   async predictDelivery(
     request: DeliveryPredictionRequest,
-  ): Promise<ApiResponse<DeliveryPredictionResponse>> {
-    return this.http.post(this.wsPath('shipping/predictions/delivery'), request);
+  ): Promise<DeliveryPredictionResponse> {
+    return this.http.post('/api/shipping/predictions/delivery', request);
   }
 
   /** Get cost-saving opportunities: lanes where switching carriers saves money without sacrificing reliability. */
-  async getSavings(): Promise<ApiResponse<CostSavingsSummary>> {
-    return this.http.get(this.wsPath('shipping/savings'));
+  async getSavings(): Promise<CostSavingsSummary> {
+    return this.http.get('/api/shipping/savings');
   }
 }
