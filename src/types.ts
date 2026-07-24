@@ -128,12 +128,21 @@ export interface RateRequest {
 }
 
 export interface ShippingRate {
-  carrier: string;
-  service: string;
+  carrierCode: string;
+  carrierName: string;
+  serviceCode: string;
+  serviceName: string;
   rate: number;
   currency: string;
-  estimatedDays: number;
-  deliveryDate?: string;
+  estimatedDays?: number;
+  estimatedDeliveryDate?: string;
+  trackingIncluded?: boolean;
+}
+
+/** Response from a rate-shopping request (raw Gateway `RateShoppingResponse`). */
+export interface RateShoppingResponse {
+  rates: ShippingRate[];
+  currency: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,12 +162,15 @@ export interface CreateLabelRequest {
 
 export interface Label {
   labelId: string;
+  carrierCode: string;
   trackingNumber: string;
-  carrier: string;
-  service: string;
   labelData: string;
   labelFormat: string;
   rate: number;
+  currency: string;
+  returnLabelData?: string;
+  orderId?: number;
+  isSandbox: boolean;
   createdAt: string;
 }
 
