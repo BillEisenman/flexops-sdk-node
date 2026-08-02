@@ -10,12 +10,6 @@ name: CI
 # that catches bundler and dependency breaks, so it runs before the tests.
 #
 # Node 20 matches publish.yml, so CI exercises what actually publishes.
-#
-# `npm run lint` is deliberately NOT run here: the script is `eslint src/ --ext
-# .ts`, which has been broken since ESLint 9 — it needs an eslint.config.js the
-# repo does not have, and --ext was removed in flat config. Wiring a known-red
-# step into a new gate would make the gate useless on day one. Fixing the lint
-# setup is its own change; add the step back with it.
 
 on:
   push:
@@ -29,7 +23,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Build, typecheck, test
+    name: Build, typecheck, test, lint
     runs-on: ubuntu-latest
 
     steps:
@@ -51,3 +45,6 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Lint
+        run: npm run lint
