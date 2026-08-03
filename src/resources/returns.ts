@@ -33,7 +33,7 @@ export class ReturnsResource {
   }): Promise<ApiResponse<ReturnAuthorization[]>> {
     return this.http.get(
       this.wsPath(''),
-      query as Record<string, string | number | boolean | undefined>,
+      query,
     );
   }
 

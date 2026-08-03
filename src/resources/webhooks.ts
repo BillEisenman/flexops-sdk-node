@@ -67,9 +67,11 @@ export class WebhooksResource {
   static verifySignature(payload: string, signature: string, secret: string): boolean {
     // HMAC-SHA256 verification — works in Node.js
     try {
-      // Dynamic import to avoid bundling crypto for browser use
+      // Dynamic import to avoid bundling crypto for browser use. The cast is what makes the
+      // calls below type-checked: a bare require() is `any`, so createHmac/timingSafeEqual and
+      // their arguments were entirely unchecked in a signature-verification routine.
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const crypto = require('node:crypto');
+      const crypto = require('node:crypto') as typeof import('node:crypto');
       const expected = crypto
         .createHmac('sha256', secret)
         .update(payload, 'utf-8')
