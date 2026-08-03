@@ -34,7 +34,7 @@ export class RecurringShipmentsResource {
   }): Promise<ApiResponse<RecurringShipment[]>> {
     return this.http.get(
       this.wsPath(''),
-      query as Record<string, string | number | boolean | undefined>,
+      query,
     );
   }
 

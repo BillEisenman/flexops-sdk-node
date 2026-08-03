@@ -40,7 +40,7 @@ export class WalletResource {
   }): Promise<ApiResponse<unknown>> {
     return this.http.get(
       this.wsPath('transactions'),
-      query as Record<string, string | number | boolean | undefined>,
+      query,
     );
   }
 
