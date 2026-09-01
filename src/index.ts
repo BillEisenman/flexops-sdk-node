@@ -22,6 +22,8 @@ export type {
   CreateWorkspaceRequest,
   WorkspaceMember,
   RateRequest,
+  ShippingAddress,
+  ShippingPackage,
   ShippingRate,
   CreateLabelRequest,
   Label,

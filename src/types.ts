@@ -114,7 +114,22 @@ export interface WorkspaceMember {
 // Shipping — Rate Shopping
 // ---------------------------------------------------------------------------
 
-export interface RateRequest {
+export type RateRequest = CanonicalRateRequest | LegacyRateRequest;
+
+export interface CanonicalRateRequest {
+  origin: ShippingAddress;
+  destination: ShippingAddress;
+  package: ShippingPackage;
+  carriers?: string[];
+  serviceLevels?: string[];
+  shipDate?: string;
+  includeInsurance?: boolean;
+  declaredValue?: number;
+  currency?: string;
+}
+
+/** @deprecated Use CanonicalRateRequest. The legacy shape is retained for source compatibility. */
+export interface LegacyRateRequest {
   fromZip: string;
   toZip: string;
   weight: number;
@@ -125,6 +140,30 @@ export interface RateRequest {
   dimensionUnit?: 'in' | 'cm';
   packageType?: string;
   carriers?: string[];
+}
+
+export interface ShippingAddress {
+  name?: string;
+  company?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  stateProvince: string;
+  postalCode: string;
+  countryCode?: string;
+  phone?: string;
+  email?: string;
+  isResidential?: boolean;
+}
+
+export interface ShippingPackage {
+  weight: number;
+  weightUnit?: 'oz' | 'lb' | 'g' | 'kg';
+  length?: number;
+  width?: number;
+  height?: number;
+  dimensionUnit?: 'in' | 'cm';
+  predefinedPackage?: string;
 }
 
 export interface ShippingRate {
