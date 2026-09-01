@@ -46,10 +46,9 @@ import { ReportsResource } from './resources/reports.js';
  *
  * // Get shipping rates
  * const rates = await client.shipping.getRates({
- *   fromZip: '10001',
- *   toZip: '90210',
- *   weight: 16,
- *   weightUnit: 'oz',
+ *   origin: { addressLine1: '123 Main St', city: 'New York', stateProvince: 'NY', postalCode: '10001' },
+ *   destination: { addressLine1: '456 Oak Ave', city: 'Los Angeles', stateProvince: 'CA', postalCode: '90210' },
+ *   package: { weight: 16, weightUnit: 'oz' },
  * });
  *
  * // Create a label with the cheapest rate

@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FlexOps, FlexOpsError, FlexOpsAuthError, FlexOpsRateLimitError } from '../src/index.js';
+import { FlexOps, FlexOpsError, FlexOpsAuthError, FlexOpsRateLimitError, type RateRequest } from '../src/index.js';
 
 // Mock fetch for all tests
 const mockFetch = vi.fn();
+
+const rateRequest: RateRequest = {
+  origin: { addressLine1: '123 Main St', city: 'New York', stateProvince: 'NY', postalCode: '10001' },
+  destination: { addressLine1: '456 Oak Ave', city: 'Los Angeles', stateProvince: 'CA', postalCode: '90210' },
+  package: { weight: 16, weightUnit: 'oz' },
+};
 
 function createClient(overrides?: Record<string, unknown>) {
   return new FlexOps({
@@ -97,12 +103,7 @@ describe('FlexOps Client', () => {
       );
 
       const client = createClient();
-      const result = await client.shipping.getRates({
-        fromZip: '10001',
-        toZip: '90210',
-        weight: 16,
-        weightUnit: 'oz',
-      });
+      const result = await client.shipping.getRates(rateRequest);
 
       expect(result.rates).toHaveLength(2);
       expect(result.rates[0]?.carrierCode).toBe('USPS');
@@ -110,6 +111,7 @@ describe('FlexOps Client', () => {
         'http://localhost:5000/api/shipping/rates',
         expect.objectContaining({ method: 'POST' }),
       );
+      expect(JSON.parse(mockFetch.mock.calls[0]?.[1]?.body as string)).toEqual(rateRequest);
     });
 
     it('gets cheapest rate', async () => {
@@ -119,11 +121,7 @@ describe('FlexOps Client', () => {
       );
 
       const client = createClient();
-      const result = await client.shipping.getCheapestRate({
-        fromZip: '10001',
-        toZip: '90210',
-        weight: 8,
-      });
+      const result = await client.shipping.getCheapestRate(rateRequest);
 
       expect(result.rate).toBe(5.25);
     });
@@ -268,7 +266,7 @@ describe('FlexOps Client', () => {
       );
 
       const client = createClient();
-      await expect(client.shipping.getRates({ fromZip: '', toZip: '', weight: 0 })).rejects.toThrow(FlexOpsError);
+      await expect(client.shipping.getRates(rateRequest)).rejects.toThrow(FlexOpsError);
     });
 
     it('throws FlexOpsRateLimitError on 429', async () => {
