@@ -6,6 +6,7 @@
 // Copyright (c) 2021-2026 by FlexOps, LLC. All rights reserved.
 // ***********************************************************************
 
+import { FlexOpsError } from '../types.js';
 import type { HttpClient } from '../http.js';
 import type {
   ApiResponse,
@@ -13,6 +14,9 @@ import type {
   ShippingRate,
   RateShoppingResponse,
   CreateLabelRequest,
+  CanonicalLabelRequest,
+  LabelPurchasePreview,
+  LabelPurchaseApproval,
   Label,
   TrackingInfo,
   AddressValidationResult,
@@ -66,8 +70,41 @@ export class ShippingResource {
    * existing order — the order's ownership, status, ship-method and addresses are validated
    * server-side and postage is settled atomically. Returns the raw label (HTTP 201).
    */
-  async createLabel(request: CreateLabelRequest): Promise<Label> {
-    return this.http.post('/api/shipping/labels', request, undefined);
+  async createLabel(request: CreateLabelRequest | CanonicalLabelRequest): Promise<Label> {
+    const result = await this.http.post<Label | LabelPurchasePreview>('/api/shipping/labels', request);
+    if ('status' in result) throw new FlexOpsError('Approval required. Use prepareLabel, review its preview, then purchaseLabel.', 400, 'ApprovalRequired');
+    return result;
+  }
+
+  /** Preview without approval. Keep the returned immutable operation for every purchase attempt. */
+  async prepareLabel(request: CanonicalLabelRequest, maximumPostageAmount: number, idempotencyKey: string): Promise<LabelPurchaseApproval> {
+    if (!idempotencyKey.trim() || !Number.isFinite(maximumPostageAmount) || maximumPostageAmount <= 0 || maximumPostageAmount > 1000000 ||
+        Math.abs(maximumPostageAmount * 100 - Math.round(maximumPostageAmount * 100)) > 1e-7)
+      throw new FlexOpsError('Supply a stable key and positive USD maximum with at most two decimal places.', 400, 'InvalidApproval');
+    const body = JSON.parse(JSON.stringify(request)) as CanonicalLabelRequest;
+    for (const key of Object.keys(body)) if (['confirmationtoken', 'maximumpostageamount'].includes(key.toLowerCase())) delete body[key];
+    body.maximumPostageAmount = maximumPostageAmount;
+    const result = await this.http.request<LabelPurchasePreview | Label>('POST', '/api/shipping/labels', {
+      body, headers: { 'Idempotency-Key': idempotencyKey },
+    });
+    if ('isSandbox' in result && result.isSandbox === true)
+      return Object.freeze({ idempotencyKey, requestJson: JSON.stringify(body), preview: null, sandboxLabel: result });
+    if (!('status' in result) || result.status !== 'Preview' || !result.confirmationToken || result.currency !== 'USD' ||
+        !Number.isFinite(result.quotedPostageAmount) || result.quotedPostageAmount <= 0 || result.quotedPostageAmount > maximumPostageAmount ||
+        result.maximumPostageAmount !== maximumPostageAmount || !Number.isFinite(Date.parse(result.expiresAt)))
+      throw new FlexOpsError('Gateway did not return a valid bounded preview.', 502, 'InvalidPreview');
+    body.confirmationToken = result.confirmationToken;
+    return Object.freeze({ idempotencyKey, requestJson: JSON.stringify(body), preview: Object.freeze(result) });
+  }
+
+  /** Call only after explicit approval. Same-key replay remains valid after token expiry. */
+  async purchaseLabel(approval: LabelPurchaseApproval): Promise<Label> {
+    if (approval.sandboxLabel) return approval.sandboxLabel;
+    const result = await this.http.request<Label>('POST', '/api/shipping/labels', {
+      body: JSON.parse(approval.requestJson), headers: { 'Idempotency-Key': approval.idempotencyKey },
+    });
+    if (!result.trackingNumber) throw new FlexOpsError('Unresolved purchase. Retain the operation and reconcile before creating another label.', 409, 'OutcomeUnknown');
+    return result;
   }
 
   /** Cancel (void) a shipping label. `carrierCode` is required. */
