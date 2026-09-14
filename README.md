@@ -431,3 +431,9 @@ MIT © FlexOps, LLC. See [LICENSE](LICENSE) for full text.
 ### Approval and retries
 
 Use these methods only with Gateway's bounded approval contract; coordinate client/Gateway activation. Preparation does not automatically approve. The ceiling covers pre-dispatch postage, excluding later carrier adjustments and separate fees. Persist the operation securely if it must survive process restart. Retry the same request/key after response loss; OutcomeUnknown requires reconciliation, never a new purchase key. Completed replay remains possible after token expiry. Sandbox operations return a synthetic label without real postage. The legacy createLabel and USPS domestic wrapper reject preview responses; use shipping.prepareLabel/purchaseLabel for live purchases.
+
+## Guarded label release compatibility
+
+This release requires a Gateway deployment with the bounded label preview/approval contract (Gateway PR #509 or later). Do not use its live label preparation against an older Gateway: older servers may purchase immediately. Upgrade the Gateway and affected callers together during a purchase maintenance window.
+
+Live label creation now requires a USD maximum, preview, explicit approval, and replay of the saved request with its original idempotency key. Never retry an uncertain purchase with a new key. Sandbox results do not certify production postage.
