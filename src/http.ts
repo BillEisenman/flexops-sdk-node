@@ -110,7 +110,7 @@ export class HttpClient {
         }
 
         // Parse error body
-        let errorBody: { message?: string; errors?: string[] } = {};
+        let errorBody: { message?: string; code?: string; errorCode?: string; errors?: string[] } = {};
         try {
           errorBody = (await response.json()) as typeof errorBody;
         } catch {
@@ -120,7 +120,7 @@ export class HttpClient {
         const error = new FlexOpsError(
           errorBody.message ?? `HTTP ${response.status}: ${response.statusText}`,
           response.status,
-          undefined,
+          errorBody.code ?? errorBody.errorCode,
           errorBody.errors,
         );
 

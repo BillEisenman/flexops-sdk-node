@@ -7,7 +7,8 @@
 // ***********************************************************************
 
 import type { HttpClient } from '../http.js';
-import type { Label } from '../types.js';
+import { ShippingResource } from './shipping.js';
+import type { CanonicalLabelRequest, Label } from '../types.js';
 
 /**
  * Direct carrier operations via the VisionSuite Core Services API proxy.
@@ -66,7 +67,7 @@ export class CarriersResource {
     // (POST /api/shipping/labels): pass a LabelRequest body with carrierCode:'USPS'
     // and orderId set — server-side order validation + atomic postage settlement.
     createDomesticLabel: (body: unknown): Promise<Label> =>
-      this.http.post('/api/shipping/labels', body),
+      new ShippingResource(this.http, () => undefined).createLabel(body as CanonicalLabelRequest),
 
     /** Generate a domestic return label. */
     createReturnLabel: (body: unknown) =>

@@ -71,37 +71,24 @@ const fastest = await client.shipping.getFastestRate(rateRequest);
 ### Create a Shipping Label
 
 ```typescript
-const label = await client.shipping.createLabel({
-  carrier: 'USPS',
-  service: 'Priority Mail',
-  fromAddress: {
-    name: 'Warehouse A',
-    street1: '123 Ship Lane',
-    city: 'New York',
-    state: 'NY',
-    zip: '10001',
-    country: 'US',
-  },
-  toAddress: {
-    name: 'Jane Customer',
-    street1: '456 Oak Ave',
-    city: 'Los Angeles',
-    state: 'CA',
-    zip: '90210',
-    country: 'US',
-  },
-  parcel: {
-    weight: 16,
-    weightUnit: 'oz',
-    length: 10,
-    width: 8,
-    height: 4,
-    dimensionUnit: 'in',
-  },
-});
+const operation = await client.shipping.prepareLabel({
+  ...rateRequest, carrierCode: 'USPS', serviceCode: 'PRIORITY',
+}, 10.00, crypto.randomUUID());
+if (operation.preview) console.log({ quote: operation.preview.quotedPostageAmount,
+  maximum: operation.preview.maximumPostageAmount, currency: operation.preview.currency,
+  expiresAt: operation.preview.expiresAt }); // omit the signed token from display/logs
+// Keep operation securely with the original Gateway and API-key identity.
 
-console.log(label.data.trackingNumber);
-console.log(label.data.labelData); // Base64 PDF
+// In a terminal example, ask explicitly before any live purchase:
+const { createInterface } = await import('node:readline/promises');
+const prompt = createInterface({ input: process.stdin, output: process.stdout });
+try {
+  const approved = operation.sandboxLabel || await prompt.question('Type approve to buy at the displayed maximum (later adjustments/fees excluded): ') === 'approve';
+  if (approved) {
+    const label = await client.shipping.purchaseLabel(operation);
+    console.log(label.trackingNumber);
+  }
+} finally { prompt.close(); }
 ```
 
 ### Tracking
@@ -440,3 +427,7 @@ npm run build
 ## License
 
 MIT © FlexOps, LLC. See [LICENSE](LICENSE) for full text.
+
+### Approval and retries
+
+Use these methods only with Gateway's bounded approval contract; coordinate client/Gateway activation. Preparation does not automatically approve. The ceiling covers pre-dispatch postage, excluding later carrier adjustments and separate fees. Persist the operation securely if it must survive process restart. Retry the same request/key after response loss; OutcomeUnknown requires reconciliation, never a new purchase key. Completed replay remains possible after token expiry. Sandbox operations return a synthetic label without real postage. The legacy createLabel and USPS domestic wrapper reject preview responses; use shipping.prepareLabel/purchaseLabel for live purchases.

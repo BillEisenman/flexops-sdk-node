@@ -424,3 +424,30 @@ describe('FlexOps Client', () => {
     });
   });
 });
+
+describe('bounded label purchases', () => {
+  beforeEach(() => mockFetch.mockReset());
+  it('requires explicit approval and preserves the exact request/key through a conflict', async () => {
+    const client = createClient({ retry: { maxRetries: 0 } });
+    mockFetch.mockImplementationOnce(() => jsonResponse({ status: 'Preview', quotedPostageAmount: 8.5,
+      maximumPostageAmount: 10, currency: 'USD', expiresAt: '2099-01-01T00:00:00Z', confirmationToken: 'signed-preview' }));
+    const request = { origin: { addressLine1: 'Sender', city: 'Dallas', stateProvince: 'TX', postalCode: '75201' },
+      destination: { addressLine1: 'Recipient', city: 'LA', stateProvince: 'CA', postalCode: '90210' },
+      package: { weight: 8 }, carrierCode: 'USPS', serviceCode: 'PRIORITY', ConfirmationToken: 'remove-this' };
+    const operation = await client.shipping.prepareLabel(request, 10, 'stable-key');
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).confirmationToken).toBeUndefined();
+    request.carrierCode = 'UPS';
+    mockFetch.mockImplementationOnce(() => jsonResponse({ errorCode: 'OutcomeUnknown', message: 'Reconcile the carrier outcome' }, 409));
+    await expect(client.shipping.purchaseLabel(operation)).rejects.toMatchObject({ code: 'OutcomeUnknown', status: 409 });
+    mockFetch.mockImplementationOnce(() => jsonResponse({ trackingNumber: 'tracking-1' }, 201));
+    await expect(client.shipping.purchaseLabel(operation)).resolves.toMatchObject({ trackingNumber: 'tracking-1' });
+    expect(mockFetch.mock.calls[1][1].body).toBe(mockFetch.mock.calls[2][1].body);
+    for (const call of mockFetch.mock.calls) expect(call[1].headers['Idempotency-Key']).toBe('stable-key');
+    expect(JSON.parse(mockFetch.mock.calls[1][1].body).carrierCode).toBe('USPS');
+  });
+  it('does not let the legacy USPS wrapper misread a preview as a label', async () => {
+    mockFetch.mockImplementationOnce(() => jsonResponse({ status: 'Preview', confirmationToken: 'signed' }));
+    await expect(createClient().carriers.usps.createDomesticLabel({})).rejects.toMatchObject({ code: 'ApprovalRequired' });
+  });
+});

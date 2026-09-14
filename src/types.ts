@@ -199,6 +199,33 @@ export interface CreateLabelRequest {
   idempotencyKey?: string;
 }
 
+/** Normalized Gateway label request. Additional shipment options are preserved in the approval snapshot. */
+export interface CanonicalLabelRequest {
+  origin: ShippingAddress;
+  destination: ShippingAddress;
+  package: ShippingPackage;
+  carrierCode: string;
+  serviceCode: string;
+  orderId?: number;
+  labelFormat?: 'PDF' | 'PNG' | 'ZPL';
+  [option: string]: unknown;
+}
+export interface LabelPurchasePreview {
+  status: 'Preview';
+  quotedPostageAmount: number;
+  maximumPostageAmount: number;
+  currency: 'USD';
+  expiresAt: string;
+  confirmationToken: string;
+}
+/** Retain securely for retries; requestJson contains private shipment data and the approval token. */
+export interface LabelPurchaseApproval {
+  readonly idempotencyKey: string;
+  readonly requestJson: string;
+  readonly preview: LabelPurchasePreview | null;
+  readonly sandboxLabel?: Label;
+}
+
 export interface Label {
   labelId: string;
   carrierCode: string;
