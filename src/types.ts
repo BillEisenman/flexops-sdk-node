@@ -167,6 +167,9 @@ export interface ShippingPackage {
 }
 
 export interface ShippingRate {
+  rateIndicator?: string;
+  uspsMailClass?: string;
+  isInternational?: boolean;
   carrierCode: string;
   carrierName: string;
   serviceCode: string;
@@ -201,6 +204,12 @@ export interface CreateLabelRequest {
 
 /** Normalized Gateway label request. Additional shipment options are preserved in the approval snapshot. */
 export interface CanonicalLabelRequest {
+  shipDate?: string;
+  declaredValue?: number;
+  customsDeclaration?: CustomsDeclaration;
+  rateIndicator?: string;
+  maximumPostageAmount?: number;
+  confirmationToken?: string;
   origin: ShippingAddress;
   destination: ShippingAddress;
   package: ShippingPackage;
@@ -637,6 +646,22 @@ export interface HsCodeResult {
 export interface LandedCostRequest {
   destinationCountry: string;
   shippingCost?: number;
+  items: CustomsItem[];
+}
+
+/** USPS label declaration. Item value and weight are per unit; server availability is gated. */
+export interface CustomsDeclaration {
+  contentsType: 'merchandise' | 'documents' | 'gift' | 'sample' | 'returned_goods' | 'other';
+  contentsExplanation?: string;
+  nonDeliveryOption: 'return' | 'abandon';
+  currency: 'USD';
+  declaredValue: number;
+  aesItn: string;
+  invoiceNumber?: string;
+  licenseNumber?: string;
+  certificateNumber?: string;
+  restrictionType?: string;
+  restrictionComments?: string;
   items: CustomsItem[];
 }
 
