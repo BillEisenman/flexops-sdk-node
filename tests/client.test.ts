@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FlexOps, FlexOpsError, FlexOpsAuthError, FlexOpsRateLimitError, type RateRequest } from '../src/index.js';
 
@@ -449,5 +450,32 @@ describe('bounded label purchases', () => {
   it('does not let the legacy USPS wrapper misread a preview as a label', async () => {
     mockFetch.mockImplementationOnce(() => jsonResponse({ status: 'Preview', confirmationToken: 'signed' }));
     await expect(createClient().carriers.usps.createDomesticLabel({})).rejects.toMatchObject({ code: 'ApprovalRequired' });
+  });
+});
+
+describe('international USPS contract', () => {
+  beforeEach(() => mockFetch.mockReset());
+  it('preserves customs in the approval snapshot and requires explicit purchase', async () => {
+    const request = JSON.parse(readFileSync(new URL('../examples/international-label.json', import.meta.url), 'utf8'));
+    const client = createClient({ retry: { maxRetries: 0 } });
+    mockFetch.mockImplementationOnce(() => jsonResponse({ status: 'Preview', quotedPostageAmount: 28.5,
+      maximumPostageAmount: 50, currency: 'USD', expiresAt: '2099-01-01T00:05:00Z', confirmationToken: 'signed' }));
+    const approval = await client.shipping.prepareLabel(request, 50, 'international-1');
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).customsDeclaration).toEqual(request.customsDeclaration);
+    request.customsDeclaration.items[0].description = 'mutated';
+    mockFetch.mockImplementationOnce(() => jsonResponse({ labelId: 'intl-1', trackingNumber: 'test', rate: 28.5, currency: 'USD' }, 201));
+    await client.shipping.purchaseLabel(approval);
+    const sent = JSON.parse(mockFetch.mock.calls[1][1].body);
+    expect(sent.customsDeclaration.items[0].description).toBe('Cotton shirt');
+    expect(sent.shipDate).toBe('2099-01-01');
+    expect(sent.orderId).toBe(42);
+    expect(mockFetch.mock.calls[1][1].headers['Idempotency-Key']).toBe('international-1');
+  });
+  it('preserves the disabled gate refusal without retrying', async () => {
+    mockFetch.mockImplementationOnce(() => jsonResponse({ errorCode: 'FeatureDisabled', message: 'International disabled' }, 403));
+    await expect(createClient().shipping.getRates({ origin: {}, destination: {}, package: {} } as never))
+      .rejects.toMatchObject({ status: 403, code: 'FeatureDisabled' });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });

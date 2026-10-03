@@ -105,9 +105,6 @@ export class HttpClient {
         if (response.status === 401) {
           throw new FlexOpsAuthError('Authentication required. Check your access token or API key.');
         }
-        if (response.status === 403) {
-          throw new FlexOpsError('Access denied. Check your plan tier and feature entitlements.', 403, 'FORBIDDEN');
-        }
 
         // Parse error body
         let errorBody: { message?: string; code?: string; errorCode?: string; errors?: string[] } = {};
@@ -120,9 +117,11 @@ export class HttpClient {
         const error = new FlexOpsError(
           errorBody.message ?? `HTTP ${response.status}: ${response.statusText}`,
           response.status,
-          errorBody.code ?? errorBody.errorCode,
+          errorBody.code ?? errorBody.errorCode ?? (response.status === 403 ? "FORBIDDEN" : undefined),
           errorBody.errors,
         );
+
+        if (response.status === 403) throw error;
 
         if (this.retry.retryableStatusCodes.includes(response.status)) {
           lastError = error;
