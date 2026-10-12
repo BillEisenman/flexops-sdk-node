@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FlexOps, FlexOpsError, FlexOpsAuthError, FlexOpsRateLimitError, type RateRequest } from '../src/index.js';
+import { FlexOps, FlexOpsError, FlexOpsAuthError, FlexOpsRateLimitError, HazmatClassification, type RateRequest } from '../src/index.js';
 
 // Mock fetch for all tests
 const mockFetch = vi.fn();
@@ -450,6 +450,87 @@ describe('bounded label purchases', () => {
   it('does not let the legacy USPS wrapper misread a preview as a label', async () => {
     mockFetch.mockImplementationOnce(() => jsonResponse({ status: 'Preview', confirmationToken: 'signed' }));
     await expect(createClient().carriers.usps.createDomesticLabel({})).rejects.toMatchObject({ code: 'ApprovalRequired' });
+  });
+});
+
+describe('Gateway wire shapes (#6)', () => {
+  beforeEach(() => mockFetch.mockReset());
+  const label = { labelId: 'lbl-1', carrierCode: 'USPS', trackingNumber: '9400', labelData: '', labelFormat: 'PDF',
+    rate: 8.5, currency: 'USD', isSandbox: true, createdAt: '2026-10-12T00:00:00Z' };
+  const sentBody = (call = 0) => JSON.parse(mockFetch.mock.calls[call]?.[1]?.body as string);
+
+  it('translates a legacy CreateLabelRequest to the Gateway LabelRequest', async () => {
+    mockFetch.mockReturnValueOnce(jsonResponse(label, 201));
+
+    await createClient().shipping.createLabel({
+      carrier: 'USPS',
+      service: 'PRIORITY',
+      fromAddress: { name: 'A', company: 'Acme', street1: '1 St', street2: 'Ste 2', city: 'NY', state: 'NY', zip: '10001', country: 'US', phone: '555' },
+      toAddress: { name: 'B', street1: '2 St', city: 'LA', state: 'CA', zip: '90210', country: 'US', email: 'b@example.com' },
+      parcel: { weight: 16, weightUnit: 'oz', length: 6, width: 4, height: 2, dimensionUnit: 'in' },
+      labelFormat: 'PDF',
+      orderId: 42,
+      hazmatClassification: HazmatClassification.None,
+      idempotencyKey: 'idem-key-001',
+    });
+
+    expect(sentBody()).toEqual({
+      carrierCode: 'USPS',
+      serviceCode: 'PRIORITY',
+      origin: { name: 'A', company: 'Acme', addressLine1: '1 St', addressLine2: 'Ste 2', city: 'NY', stateProvince: 'NY', postalCode: '10001', countryCode: 'US', phone: '555' },
+      destination: { name: 'B', addressLine1: '2 St', city: 'LA', stateProvince: 'CA', postalCode: '90210', countryCode: 'US', email: 'b@example.com' },
+      package: { weight: 16, weightUnit: 'oz', length: 6, width: 4, height: 2, dimensionUnit: 'in' },
+      labelFormat: 'PDF',
+      orderId: 42,
+      hazmatClassification: 0,
+    });
+    expect(mockFetch.mock.calls[0]?.[1]?.headers['Idempotency-Key']).toBe('idem-key-001');
+  });
+
+  it('refuses a legacy return label instead of buying an outbound label', async () => {
+    await expect(createClient().shipping.createLabel({
+      carrier: 'USPS', service: 'PRIORITY', returnLabel: true,
+      fromAddress: { name: 'A', street1: '1 St', city: 'NY', state: 'NY', zip: '10001', country: 'US' },
+      toAddress: { name: 'B', street1: '2 St', city: 'LA', state: 'CA', zip: '90210', country: 'US' },
+      parcel: { weight: 16 },
+    })).rejects.toMatchObject({ code: 'UnsupportedRequestShape', status: 400 });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('refuses zip-only legacy rate requests before calling the Gateway', async () => {
+    const legacy = { fromZip: '10001', toZip: '90210', weight: 16 };
+    const shipping = createClient().shipping;
+    for (const call of [shipping.getRates(legacy), shipping.getCheapestRate(legacy), shipping.getFastestRate(legacy)])
+      await expect(call).rejects.toMatchObject({ code: 'UnsupportedRequestShape', status: 400 });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('wraps validateAddress in the Gateway AddressValidationRequest', async () => {
+    mockFetch.mockReturnValueOnce(jsonResponse({ isValid: true })).mockReturnValueOnce(jsonResponse({ isValid: true }));
+    const canonical = { addressLine1: '123 Main St', city: 'New York', stateProvince: 'NY', postalCode: '10001', countryCode: 'US' };
+
+    await createClient().shipping.validateAddress({ name: 'J', street1: '123 Main St', city: 'New York', state: 'NY', zip: '10001', country: 'US' });
+    await createClient().shipping.validateAddress(canonical);
+
+    expect(sentBody(0)).toEqual({ address: { name: 'J', ...canonical } });
+    expect(sentBody(1)).toEqual({ address: canonical });
+  });
+
+  it('sends hazmatClassification only when the caller sets it', async () => {
+    mockFetch
+      .mockReturnValueOnce(jsonResponse(label, 201))
+      .mockReturnValueOnce(jsonResponse(label, 201))
+      .mockReturnValueOnce(jsonResponse({ rates: [], currency: 'USD' }));
+    const request = { ...rateRequest, carrierCode: 'USPS', serviceCode: 'PRIORITY' };
+    const shipping = createClient().shipping;
+
+    await shipping.createLabel(request);
+    await shipping.createLabel({ ...request, hazmatClassification: HazmatClassification.LimitedQuantity });
+    await shipping.getRates({ ...rateRequest, hazmatClassification: HazmatClassification.None });
+
+    expect('hazmatClassification' in sentBody(0)).toBe(false);
+    expect(sentBody(1).hazmatClassification).toBe(1);
+    expect(sentBody(2).hazmatClassification).toBe(0);
   });
 });
 

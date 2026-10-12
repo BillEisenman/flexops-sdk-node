@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `shipping.createLabel()` translates the deprecated `CreateLabelRequest` (`carrier`, `fromAddress`, `parcel`, ...) to the Gateway wire shape and sends `idempotencyKey` as the `Idempotency-Key` header; `returnLabel: true` is refused with `UnsupportedRequestShape` instead of buying an outbound label (#6).
+- `shipping.validateAddress()` sends the Gateway `{ address }` request and accepts `ShippingAddress` as well as `Address` (#6).
+- Zip-only `LegacyRateRequest` is refused client-side with `UnsupportedRequestShape`; the Gateway needs full addresses (#6).
+
+### Added
+- `HazmatClassification` and an optional `hazmatClassification` on label and rate requests. It is sent only when set; the SDK never defaults it. Labels without an `orderId` must declare it (`HazmatClassification.None` for an ordinary parcel).
+
 ### Changed
 - README: added a curl quickstart section so developers can verify the FlexOps API before committing to the SDK.
 - Retargeted repository URL references to `github.com/BillEisenman/flexops-sdk-node` (organization migration from `FlexOps/`).

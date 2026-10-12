@@ -22,6 +22,8 @@ export type {
   CreateWorkspaceRequest,
   WorkspaceMember,
   RateRequest,
+  CanonicalRateRequest,
+  LegacyRateRequest,
   ShippingAddress,
   ShippingPackage,
   ShippingRate,
@@ -82,6 +84,9 @@ export type {
   CreateReportScheduleRequest,
   UpdateReportScheduleRequest,
 } from './types.js';
+
+// Values
+export { HazmatClassification } from './types.js';
 
 // Errors
 export {

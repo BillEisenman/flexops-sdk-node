@@ -114,6 +114,22 @@ export interface WorkspaceMember {
 // Shipping — Rate Shopping
 // ---------------------------------------------------------------------------
 
+/**
+ * USPS HAZMAT classification, sent as the Gateway `HazmatClassification` number.
+ * There is no default: omit it when you have no answer, send `HazmatClassification.None` (0)
+ * to declare the parcel not hazardous.
+ */
+export const HazmatClassification = {
+  None: 0,
+  LimitedQuantity: 1,
+  LithiumBatteryContainedInEquipment: 2,
+  LithiumBatteryPackedWithEquipment: 3,
+  LithiumBatteryStandalone: 4,
+  OtherRestricted: 5,
+  LithiumBatteryUsedDevice: 6,
+} as const;
+export type HazmatClassification = (typeof HazmatClassification)[keyof typeof HazmatClassification];
+
 export type RateRequest = CanonicalRateRequest | LegacyRateRequest;
 
 export interface CanonicalRateRequest {
@@ -126,9 +142,14 @@ export interface CanonicalRateRequest {
   includeInsurance?: boolean;
   declaredValue?: number;
   currency?: string;
+  /** Declared HAZMAT class, so quotes match what the label route will accept. */
+  hazmatClassification?: HazmatClassification;
 }
 
-/** @deprecated Use CanonicalRateRequest. The legacy shape is retained for source compatibility. */
+/**
+ * @deprecated The Gateway needs full origin and destination addresses; this zip-only shape is
+ * refused client-side with `UnsupportedRequestShape`. Use CanonicalRateRequest.
+ */
 export interface LegacyRateRequest {
   fromZip: string;
   toZip: string;
@@ -191,6 +212,11 @@ export interface RateShoppingResponse {
 // Shipping — Labels
 // ---------------------------------------------------------------------------
 
+/**
+ * @deprecated Use CanonicalLabelRequest. This shape is translated to the Gateway wire format
+ * (`carrierCode`, `serviceCode`, `origin`, `destination`, `package`); `idempotencyKey` is sent
+ * as the `Idempotency-Key` header. `returnLabel: true` is refused; use the returns API.
+ */
 export interface CreateLabelRequest {
   carrier: string;
   service: string;
@@ -200,6 +226,8 @@ export interface CreateLabelRequest {
   returnLabel?: boolean;
   labelFormat?: 'PDF' | 'PNG' | 'ZPL';
   idempotencyKey?: string;
+  orderId?: number;
+  hazmatClassification?: HazmatClassification;
 }
 
 /** Normalized Gateway label request. Additional shipment options are preserved in the approval snapshot. */
@@ -217,6 +245,11 @@ export interface CanonicalLabelRequest {
   serviceCode: string;
   orderId?: number;
   labelFormat?: 'PDF' | 'PNG' | 'ZPL';
+  /**
+   * Declared HAZMAT class. Labels without an `orderId` must declare one (send
+   * `HazmatClassification.None` for an ordinary parcel); the SDK never fills it in.
+   */
+  hazmatClassification?: HazmatClassification;
   [option: string]: unknown;
 }
 export interface LabelPurchasePreview {
