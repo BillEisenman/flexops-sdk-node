@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `shipping.validateAddress()` sends the Gateway `{ address }` request and accepts `ShippingAddress` as well as `Address` (#6).
 - Zip-only `LegacyRateRequest` is refused client-side with `UnsupportedRequestShape`; the Gateway needs full addresses (#6).
 
+### Fixed
+- `returns.generateLabel()` sent no body, which the Gateway refuses. It now always sends a JSON object and takes an optional `ReturnLabelRequest` (`weightOz`, `lengthIn`, `widthIn`, `heightIn`, `carrierCode`, `serviceType`, `paymentConfirmed`, `hazmatClassification`). Send the weight and size: a workspace with no default shipping preset gets a 400 (`PackageMeasurementsRequired`) naming the missing fields (Gateway #672).
+
 ### Added
 - `HazmatClassification` and an optional `hazmatClassification` on label and rate requests. It is sent only when set; the SDK never defaults it. Labels without an `orderId` must declare it (`HazmatClassification.None` for an ordinary parcel).
 

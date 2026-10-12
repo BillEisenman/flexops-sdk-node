@@ -438,6 +438,36 @@ export interface ReturnItem {
   reason?: string;
 }
 
+/**
+ * Body of `POST /api/workspaces/{workspaceId}/returns/{rmaNumber}/label`.
+ *
+ * The carrier needs the package weight and all three dimensions. Send `weightOz`, `lengthIn`,
+ * `widthIn` and `heightIn`; any you leave out come from the workspace's default shipping preset.
+ * With no preset the Gateway refuses the call with a 400 (code `PackageMeasurementsRequired`)
+ * that names the missing fields.
+ */
+export interface ReturnLabelRequest {
+  /** Carrier for the return label. Defaults to `usps` on the Gateway (the only carrier supported). */
+  carrierCode?: string;
+  /** Carrier service for the return label. */
+  serviceType?: string;
+  /** Package weight in ounces. */
+  weightOz?: number;
+  /** Package length in inches. */
+  lengthIn?: number;
+  /** Package width in inches. */
+  widthIn?: number;
+  /** Package height in inches. */
+  heightIn?: number;
+  /** Set when the workspace return-cost policy is CustomerPays and the customer has paid. */
+  paymentConfirmed?: boolean;
+  /**
+   * Declared HAZMAT class. Omit it for no answer, or send `HazmatClassification.None` (0).
+   * Return labels cannot carry HAZMAT yet, so any other class is refused (400 `HazmatNotSupported`).
+   */
+  hazmatClassification?: HazmatClassification;
+}
+
 export interface ReturnAuthorization {
   rmaId: string;
   status: string;

@@ -327,7 +327,14 @@ const rma = await client.returns.create({
 
 // Approve and generate return label
 await client.returns.approve(rma.data.rmaId);
-await client.returns.generateLabel(rma.data.rmaId);
+// Send the package weight and size. Anything left out comes from the workspace's default
+// shipping preset; with no preset the API answers 400 PackageMeasurementsRequired.
+await client.returns.generateLabel(rma.data.rmaId, {
+  weightOz: 16,
+  lengthIn: 10,
+  widthIn: 8,
+  heightIn: 4,
+});
 
 // Mark items as received
 await client.returns.markReceived(rma.data.rmaId, [
