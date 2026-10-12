@@ -21,6 +21,8 @@ import type {
   TrackingInfo,
   AddressValidationResult,
   Address,
+  ShippingAddress,
+  CanonicalRateRequest,
   BatchLabelRequest,
   BatchLabelJob,
   CarrierRecommendationRequest,
@@ -48,17 +50,17 @@ export class ShippingResource {
 
   /** Get shipping rates from all configured carriers. */
   async getRates(request: RateRequest): Promise<RateShoppingResponse> {
-    return this.http.post('/api/shipping/rates', request);
+    return this.http.post('/api/shipping/rates', toRateWire(request));
   }
 
   /** Get the single cheapest rate across all carriers. */
   async getCheapestRate(request: RateRequest): Promise<ShippingRate> {
-    return this.http.post('/api/shipping/rates/cheapest', request);
+    return this.http.post('/api/shipping/rates/cheapest', toRateWire(request));
   }
 
   /** Get the single fastest rate across all carriers. */
   async getFastestRate(request: RateRequest): Promise<ShippingRate> {
-    return this.http.post('/api/shipping/rates/fastest', request);
+    return this.http.post('/api/shipping/rates/fastest', toRateWire(request));
   }
 
   // -----------------------------------------------------------------------
@@ -71,7 +73,11 @@ export class ShippingResource {
    * server-side and postage is settled atomically. Returns the raw label (HTTP 201).
    */
   async createLabel(request: CreateLabelRequest | CanonicalLabelRequest): Promise<Label> {
-    const result = await this.http.post<Label | LabelPurchasePreview>('/api/shipping/labels', request);
+    const { body, idempotencyKey } = toLabelWire(request);
+    const result = await this.http.request<Label | LabelPurchasePreview>('POST', '/api/shipping/labels', {
+      body,
+      ...(idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : {}),
+    });
     if ('status' in result) throw new FlexOpsError('Approval required. Use prepareLabel, review its preview, then purchaseLabel.', 400, 'ApprovalRequired');
     return result;
   }
@@ -128,8 +134,8 @@ export class ShippingResource {
   // -----------------------------------------------------------------------
 
   /** Validate and correct a shipping address. */
-  async validateAddress(address: Address): Promise<AddressValidationResult> {
-    return this.http.post('/api/shipping/addresses/validate', address);
+  async validateAddress(address: Address | ShippingAddress): Promise<AddressValidationResult> {
+    return this.http.post('/api/shipping/addresses/validate', { address: toShippingAddress(address) });
   }
 
   // -----------------------------------------------------------------------
@@ -187,4 +193,53 @@ export class ShippingResource {
   async getSavings(): Promise<CostSavingsSummary> {
     return this.http.get('/api/shipping/savings');
   }
+}
+
+function unsupported(message: string): FlexOpsError {
+  return new FlexOpsError(message, 400, 'UnsupportedRequestShape');
+}
+
+/** Maps the SDK's legacy `Address` to the Gateway `ShippingAddress`; canonical input passes through. */
+function toShippingAddress(address: Address | ShippingAddress): ShippingAddress {
+  if (!('street1' in address)) return address;
+  return {
+    name: address.name,
+    company: address.company,
+    addressLine1: address.street1,
+    addressLine2: address.street2,
+    city: address.city,
+    stateProvince: address.state,
+    postalCode: address.zip,
+    countryCode: address.country,
+    phone: address.phone,
+    email: address.email,
+  };
+}
+
+function toRateWire(request: RateRequest): CanonicalRateRequest {
+  if ('fromZip' in request)
+    throw unsupported('The Gateway needs full origin and destination addresses. Use origin, destination and package.');
+  return request;
+}
+
+/** Translates the deprecated `CreateLabelRequest` to the Gateway `LabelRequest`; canonical input passes through. */
+function isLegacyLabelRequest(request: CreateLabelRequest | CanonicalLabelRequest): request is CreateLabelRequest {
+  return 'fromAddress' in request && !('origin' in request);
+}
+
+function toLabelWire(request: CreateLabelRequest | CanonicalLabelRequest): { body: CanonicalLabelRequest; idempotencyKey?: string } {
+  if (!isLegacyLabelRequest(request)) return { body: request };
+  if (request.returnLabel)
+    throw unsupported('createLabel cannot buy return labels. Use the returns API.');
+  const body: CanonicalLabelRequest = {
+    carrierCode: request.carrier,
+    serviceCode: request.service,
+    origin: toShippingAddress(request.fromAddress),
+    destination: toShippingAddress(request.toAddress),
+    package: { ...request.parcel },
+    labelFormat: request.labelFormat,
+    orderId: request.orderId,
+    hazmatClassification: request.hazmatClassification,
+  };
+  return { body, idempotencyKey: request.idempotencyKey };
 }

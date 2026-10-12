@@ -25,7 +25,7 @@ npm install @flexops/sdk
 ### API Key Authentication (server-to-server)
 
 ```typescript
-import { FlexOps } from '@flexops/sdk';
+import { FlexOps, HazmatClassification } from '@flexops/sdk';
 
 const client = new FlexOps({
   apiKey: 'fxk_live_...',
@@ -73,6 +73,8 @@ const fastest = await client.shipping.getFastestRate(rateRequest);
 ```typescript
 const operation = await client.shipping.prepareLabel({
   ...rateRequest, carrierCode: 'USPS', serviceCode: 'PRIORITY',
+  // Required without an orderId. The SDK never fills it in; None = not hazardous.
+  hazmatClassification: HazmatClassification.None,
 }, 10.00, crypto.randomUUID());
 if (operation.preview) console.log({ quote: operation.preview.quotedPostageAmount,
   maximum: operation.preview.maximumPostageAmount, currency: operation.preview.currency,
@@ -250,20 +252,21 @@ curl -X POST https://gateway.flexops.io/api/shipping/rates \
     "package": {"weight": 16, "weightUnit": "oz"}
   }'
 
-# Create a label
-curl -X POST https://gateway.flexops.io/api/workspaces/ws_abc123/shipping/labels \
+# Create a label (hazmatClassification 0 = not hazardous; required when there is no orderId)
+curl -X POST https://gateway.flexops.io/api/shipping/labels \
   -H "X-API-Key: fxk_live_..." \
   -H "Content-Type: application/json" \
   -d '{
-    "carrier":  "USPS",
-    "service":  "PRIORITY_MAIL",
-    "fromAddress": {"name": "Warehouse", "street1": "123 Main St", "city": "New York", "state": "NY", "zip": "10001", "country": "US"},
-    "toAddress":   {"name": "Customer",  "street1": "456 Oak Ave", "city": "Los Angeles", "state": "CA", "zip": "90210", "country": "US"},
-    "parcel":   {"weight": 16, "weightUnit": "oz"}
+    "carrierCode": "USPS",
+    "serviceCode": "PRIORITY",
+    "origin":      {"name": "Warehouse", "addressLine1": "123 Main St", "city": "New York", "stateProvince": "NY", "postalCode": "10001", "countryCode": "US"},
+    "destination": {"name": "Customer",  "addressLine1": "456 Oak Ave", "city": "Los Angeles", "stateProvince": "CA", "postalCode": "90210", "countryCode": "US"},
+    "package":     {"weight": 16, "weightUnit": "oz"},
+    "hazmatClassification": 0
   }'
 
 # Track a shipment
-curl https://gateway.flexops.io/api/workspaces/ws_abc123/shipping/track/9400111899223456789012 \
+curl https://gateway.flexops.io/api/shipping/track/9400111899223456789012 \
   -H "X-API-Key: fxk_live_..."
 
 # Cancel a label (via the unified carrier-agnostic endpoint)
