@@ -423,6 +423,39 @@ describe('FlexOps Client', () => {
 
       expect(result.data?.rmaId).toBe('rma-001');
     });
+
+    it('sends the package weight and size on a return label (#672)', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: { trackingNumber: '9400' } }));
+
+      const client = createClient();
+      await client.returns.generateLabel('RMA-001', {
+        weightOz: 16,
+        lengthIn: 10,
+        widthIn: 8,
+        heightIn: 4,
+        hazmatClassification: HazmatClassification.None,
+      });
+
+      const [url, init] = mockFetch.mock.calls[0];
+      expect(url).toContain('/api/workspaces/ws-test-001/returns/RMA-001/label');
+      expect(init.method).toBe('POST');
+      expect(JSON.parse(init.body)).toEqual({
+        weightOz: 16,
+        lengthIn: 10,
+        widthIn: 8,
+        heightIn: 4,
+        hazmatClassification: 0,
+      });
+    });
+
+    it('always sends a JSON body on a return label, even with no options (#672)', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: { trackingNumber: '9400' } }));
+
+      const client = createClient();
+      await client.returns.generateLabel('RMA-001');
+
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({});
+    });
   });
 });
 

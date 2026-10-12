@@ -48,6 +48,7 @@ export type {
   InsurancePolicy,
   ReturnRequest,
   ReturnItem,
+  ReturnLabelRequest,
   ReturnAuthorization,
   ApiKeyInfo,
   CreateApiKeyRequest,

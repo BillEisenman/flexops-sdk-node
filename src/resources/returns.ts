@@ -10,6 +10,7 @@ import type { HttpClient } from '../http.js';
 import type {
   ApiResponse,
   ReturnRequest,
+  ReturnLabelRequest,
   ReturnAuthorization,
 } from '../types.js';
 
@@ -62,9 +63,16 @@ export class ReturnsResource {
     return this.http.post(this.wsPath(`${returnId}/cancel`));
   }
 
-  /** Generate a return label for an approved RMA. */
-  async generateLabel(returnId: string): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.wsPath(`${returnId}/label`));
+  /**
+   * Generate a return label for an approved RMA.
+   *
+   * The Gateway binds a required request body, so one is always sent (`{}` when `request` is
+   * omitted). Pass `weightOz`, `lengthIn`, `widthIn` and `heightIn`: a workspace with no default
+   * shipping preset has nothing else to take the package from and the call fails with a 400 that
+   * names the missing fields.
+   */
+  async generateLabel(returnId: string, request: ReturnLabelRequest = {}): Promise<ApiResponse<unknown>> {
+    return this.http.post(this.wsPath(`${returnId}/label`), request);
   }
 
   /** Mark items as received. */
