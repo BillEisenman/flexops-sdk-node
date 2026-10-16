@@ -220,22 +220,45 @@ const webhook = await client.webhooks.create({
 
 // Rotate the signing secret
 await client.webhooks.rotateSecret(webhook.data.id);
+```
 
-// Verify incoming webhook signatures in your handler
+### Verifying deliveries
+
+Each delivery is a `POST` whose body is the event data itself (there is no `{ type, data }`
+envelope). The headers carry the rest:
+
+| Header | Value |
+|---|---|
+| `X-FlexOps-Event` | Event name, e.g. `LabelCreated`; `test` for a test delivery |
+| `X-FlexOps-Event-Id` | Event ID; use it to ignore retried duplicates |
+| `X-FlexOps-Timestamp` | Unix seconds when the delivery was signed |
+| `X-FlexOps-Signature` | `sha256=` + hex HMAC-SHA256 of `{timestamp}.{raw body}`, keyed with your `whsec_...` secret |
+| `X-FlexOps-Delivery` | Delivery attempt ID |
+
+Verify against the raw body bytes. Re-serializing parsed JSON (`JSON.stringify(req.body)`) does not
+reproduce what was signed.
+
+```typescript
+import express from 'express';
 import { WebhooksResource } from '@flexops/sdk';
 
-app.post('/webhooks/flexops', (req, res) => {
-  const signature = req.headers['x-flexops-signature'];
+app.post('/webhooks/flexops', express.raw({ type: 'application/json' }), (req, res) => {
   const isValid = WebhooksResource.verifySignature(
-    JSON.stringify(req.body),
-    signature,
-    process.env.FLEXOPS_WEBHOOK_SECRET,
+    req.body, // raw Buffer from express.raw()
+    req.header('x-flexops-signature'),
+    process.env.FLEXOPS_WEBHOOK_SECRET!,
+    req.header('x-flexops-timestamp'), // rejected if more than 300 s from now
   );
-
   if (!isValid) return res.status(401).send('Invalid signature');
-  // Process webhook...
+
+  const eventType = req.header('x-flexops-event'); // 'LabelCreated', 'TrackingUpdated', 'test', ...
+  const data = JSON.parse(req.body.toString('utf8')); // the event data; no envelope
+  // Process the event...
+  res.sendStatus(200);
 });
 ```
+
+Pass `{ toleranceSeconds }` as a fifth argument to change the 300 second timestamp window.
 
 ## Curl Quickstart
 

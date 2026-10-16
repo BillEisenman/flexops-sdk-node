@@ -61,27 +61,88 @@ export class WebhooksResource {
   }
 
   /**
-   * Verify a webhook signature from an incoming request.
-   * Use this in your webhook handler to validate authenticity.
+   * Verify that an incoming request is a genuine FlexOps webhook delivery.
+   *
+   * FlexOps signs `{X-FlexOps-Timestamp}.{raw body}` with HMAC-SHA256, keyed with the
+   * subscription secret (the whole `whsec_...` string), and sends
+   * `X-FlexOps-Signature: sha256=<lowercase hex>`.
+   *
+   * @param payload The raw request body exactly as received (string or bytes). Do not pass
+   *   re-serialized JSON: `JSON.stringify(req.body)` will not reproduce the signed bytes.
+   * @param signature The `X-FlexOps-Signature` header. `sha256=<hex>` and bare `<hex>` are accepted.
+   * @param secret The subscription signing secret.
+   * @param timestamp The `X-FlexOps-Timestamp` header (Unix seconds).
+   * @param options `toleranceSeconds` (default 300) bounds how far the timestamp may be from now
+   *   in either direction; `now` (Unix seconds) overrides the clock, for tests.
+   * @returns `true` only when the signature matches and the timestamp is within tolerance.
+   * @throws TypeError when `secret` is empty or `payload` is not a string or bytes.
    */
-  static verifySignature(payload: string, signature: string, secret: string): boolean {
-    // HMAC-SHA256 verification — works in Node.js
-    try {
-      // Dynamic import to avoid bundling crypto for browser use. The cast is what makes the
-      // calls below type-checked: a bare require() is `any`, so createHmac/timingSafeEqual and
-      // their arguments were entirely unchecked in a signature-verification routine.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const crypto = require('node:crypto') as typeof import('node:crypto');
-      const expected = crypto
-        .createHmac('sha256', secret)
-        .update(payload, 'utf-8')
-        .digest('hex');
-      return crypto.timingSafeEqual(
-        Buffer.from(signature, 'hex'),
-        Buffer.from(expected, 'hex'),
-      );
-    } catch {
-      return false;
+  static verifySignature(
+    payload: string | Uint8Array,
+    signature: string | null | undefined,
+    secret: string,
+    timestamp: string | null | undefined,
+    options: VerifySignatureOptions = {},
+  ): boolean {
+    if (typeof secret !== 'string' || secret.length === 0) {
+      throw new TypeError('A webhook signing secret is required.');
     }
+    if (typeof payload !== 'string' && !(payload instanceof Uint8Array)) {
+      throw new TypeError('payload must be the raw request body as a string or bytes.');
+    }
+    const toleranceSeconds = options.toleranceSeconds ?? DEFAULT_TOLERANCE_SECONDS;
+    if (!Number.isFinite(toleranceSeconds) || toleranceSeconds < 0) {
+      throw new TypeError('toleranceSeconds must be a non-negative number.');
+    }
+
+    if (typeof signature !== 'string' || typeof timestamp !== 'string') return false;
+
+    const ts = timestamp.trim();
+    if (!/^[0-9]+$/.test(ts)) return false;
+    const now = options.now ?? Date.now() / 1000;
+    // Written so a NaN distance (a non-finite `now`) is rejected rather than treated as in range.
+    if (!(Math.abs(now - Number(ts)) <= toleranceSeconds)) return false;
+
+    let hex = signature.trim();
+    if (hex.slice(0, SIGNATURE_PREFIX.length).toLowerCase() === SIGNATURE_PREFIX) {
+      hex = hex.slice(SIGNATURE_PREFIX.length);
+    }
+    hex = hex.toLowerCase();
+    // A SHA-256 digest is 64 hex characters; anything else (another scheme, a truncated or padded
+    // value) cannot match and must not reach timingSafeEqual, which throws on a length mismatch.
+    if (!/^[0-9a-f]{64}$/.test(hex)) return false;
+
+    const crypto = loadNodeCrypto();
+    const expected = crypto.createHmac('sha256', secret).update(`${ts}.`, 'utf8').update(payload).digest();
+    return crypto.timingSafeEqual(Buffer.from(hex, 'hex'), expected);
   }
+}
+
+/** Options for {@link WebhooksResource.verifySignature}. */
+export interface VerifySignatureOptions {
+  /** Maximum distance, in seconds, between `X-FlexOps-Timestamp` and now. Defaults to 300. */
+  toleranceSeconds?: number;
+  /** The current time in Unix seconds. Defaults to the system clock; set it in tests. */
+  now?: number;
+}
+
+const DEFAULT_TOLERANCE_SECONDS = 300;
+const SIGNATURE_PREFIX = 'sha256=';
+
+type NodeCrypto = typeof import('node:crypto');
+
+/**
+ * Loads node:crypto lazily so importing the SDK in a browser bundle does not pull it in.
+ * `process.getBuiltinModule` works in both the ESM and CJS builds; `require` is only the CJS
+ * fallback for older Node. The ESM build cannot use `require` at all (tsup's shim throws), which
+ * is why the previous `require`-only helper always returned false when imported as an ES module.
+ */
+function loadNodeCrypto(): NodeCrypto {
+  const fromProcess = globalThis.process?.getBuiltinModule?.('node:crypto');
+  if (fromProcess) return fromProcess;
+  if (typeof require === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('node:crypto') as NodeCrypto;
+  }
+  throw new Error('Webhook signature verification needs node:crypto (Node.js 20.16+ for the ES module build).');
 }

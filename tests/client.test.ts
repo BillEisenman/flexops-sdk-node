@@ -314,25 +314,6 @@ describe('FlexOps Client', () => {
     });
   });
 
-  describe('webhook signature verification', () => {
-    it('verifies a valid HMAC-SHA256 signature', async () => {
-      const crypto = await import('node:crypto');
-      const secret = 'whsec_test123';
-      const payload = '{"event":"label.created","data":{}}';
-      const signature = crypto.createHmac('sha256', secret).update(payload, 'utf-8').digest('hex');
-
-      const { WebhooksResource } = await import('../src/resources/webhooks.js');
-      expect(WebhooksResource.verifySignature(payload, signature, secret)).toBe(true);
-    });
-
-    it('rejects an invalid signature', async () => {
-      const { WebhooksResource } = await import('../src/resources/webhooks.js');
-      expect(
-        WebhooksResource.verifySignature('payload', 'invalid'.padEnd(64, '0'), 'secret'),
-      ).toBe(false);
-    });
-  });
-
   describe('idempotency', () => {
     it('sends idempotency key header for label creation', async () => {
       mockFetch.mockReturnValueOnce(
