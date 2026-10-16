@@ -101,7 +101,7 @@ export { AuthResource } from './resources/auth.js';
 export { WorkspacesResource } from './resources/workspaces.js';
 export { ShippingResource } from './resources/shipping.js';
 export { CarriersResource } from './resources/carriers.js';
-export { WebhooksResource } from './resources/webhooks.js';
+export { WebhooksResource, type VerifySignatureOptions } from './resources/webhooks.js';
 export { WalletResource } from './resources/wallet.js';
 export { InsuranceResource } from './resources/insurance.js';
 export { ReturnsResource } from './resources/returns.js';
