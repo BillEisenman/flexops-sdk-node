@@ -6,11 +6,13 @@
 // Copyright (c) 2021-2026 by FlexOps, LLC. All rights reserved.
 // ***********************************************************************
 
+import { FlexOpsError, WebhookEventType } from '../types.js';
 import type { HttpClient } from '../http.js';
 import type {
   ApiResponse,
   WebhookSubscription,
   CreateWebhookRequest,
+  UpdateWebhookRequest,
 } from '../types.js';
 
 export class WebhooksResource {
@@ -35,14 +37,21 @@ export class WebhooksResource {
     return this.http.get(this.wsPath(webhookId));
   }
 
-  /** Create a webhook subscription. */
+  /**
+   * Create a webhook subscription. `events` is sent as the Gateway's comma-separated `eventTypes`;
+   * omit it to receive every event.
+   * @throws FlexOpsError (`UnknownWebhookEvent`) when `events` is empty or names an event FlexOps does not send.
+   */
   async create(request: CreateWebhookRequest): Promise<ApiResponse<WebhookSubscription>> {
-    return this.http.post(this.wsPath(''), request);
+    return this.http.post(this.wsPath(''), toWireRequest(request));
   }
 
-  /** Update a webhook subscription. */
-  async update(webhookId: string, data: Partial<CreateWebhookRequest>): Promise<ApiResponse<WebhookSubscription>> {
-    return this.http.put(this.wsPath(webhookId), data);
+  /**
+   * Update a webhook subscription. `events`, when given, replaces the subscribed events.
+   * @throws FlexOpsError (`UnknownWebhookEvent`) when `events` is empty or names an event FlexOps does not send.
+   */
+  async update(webhookId: string, data: UpdateWebhookRequest): Promise<ApiResponse<WebhookSubscription>> {
+    return this.http.put(this.wsPath(webhookId), toWireRequest(data));
   }
 
   /** Delete a webhook subscription. */
@@ -128,6 +137,29 @@ export interface VerifySignatureOptions {
 
 const DEFAULT_TOLERANCE_SECONDS = 300;
 const SIGNATURE_PREFIX = 'sha256=';
+const KNOWN_EVENTS: ReadonlySet<string> = new Set(Object.values(WebhookEventType));
+
+/**
+ * The Gateway reads a comma-separated `eventTypes` string, ignores an `events` field (subscribing to
+ * every event), and matches each name exactly. A name it never sends would leave the subscription
+ * silent, so it is refused here instead.
+ */
+function toWireRequest(request: CreateWebhookRequest | UpdateWebhookRequest): Record<string, unknown> {
+  const { events, ...rest } = request;
+  if (events === undefined) return rest;
+  if (!Array.isArray(events) || events.length === 0) {
+    throw new FlexOpsError('events must name at least one event; omit it to receive every event.', 400, 'UnknownWebhookEvent');
+  }
+  const unknown = events.filter((name) => !KNOWN_EVENTS.has(name));
+  if (unknown.length > 0) {
+    throw new FlexOpsError(
+      `Unknown webhook event: ${unknown.join(', ')}. FlexOps sends ${[...KNOWN_EVENTS].join(', ')}.`,
+      400,
+      'UnknownWebhookEvent',
+    );
+  }
+  return { ...rest, eventTypes: [...new Set(events)].join(',') };
+}
 
 type NodeCrypto = typeof import('node:crypto');
 

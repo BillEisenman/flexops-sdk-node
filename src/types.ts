@@ -376,18 +376,49 @@ export interface OrderItem {
 // Webhooks
 // ---------------------------------------------------------------------------
 
+/**
+ * Event names FlexOps sends in the `X-FlexOps-Event` header and matches subscriptions against.
+ * Names are PascalCase and matched exactly: a dotted name such as `label.created` matches nothing.
+ * `TrackingUpdated` and `TrackingDelivered` are sent only to workspaces in the USPS push-tracking pilot.
+ */
+export const WebhookEventType = {
+  LabelCreated: 'LabelCreated',
+  LabelCanceled: 'LabelCanceled',
+  BatchCompleted: 'BatchCompleted',
+  TrackingUpdated: 'TrackingUpdated',
+  TrackingDelivered: 'TrackingDelivered',
+} as const;
+export type WebhookEventType = (typeof WebhookEventType)[keyof typeof WebhookEventType];
+
+/** A webhook subscription as the Gateway returns it. */
 export interface WebhookSubscription {
   id: string;
   url: string;
-  events: string[];
-  isActive: boolean;
-  secret: string;
+  description?: string | null;
+  /** Subscribed event names, comma-separated, or `*` for every event. */
+  eventTypes: string;
+  /** `Active`, `Paused` or `Disabled`. */
+  status: string;
+  consecutiveFailures: number;
   createdAt: string;
+  updatedAt?: string | null;
+  /** The `whsec_...` signing secret. Returned only when the subscription is created. */
+  secret?: string;
 }
 
 export interface CreateWebhookRequest {
   url: string;
-  events: string[];
+  description?: string;
+  /** Events to receive. Omit it to receive every event. Sent as the Gateway's comma-separated `eventTypes`. */
+  events?: WebhookEventType[];
+}
+
+export interface UpdateWebhookRequest {
+  url?: string;
+  description?: string;
+  /** Replaces the subscribed events. Sent as the Gateway's comma-separated `eventTypes`. */
+  events?: WebhookEventType[];
+  status?: 'Active' | 'Paused' | 'Disabled';
 }
 
 // ---------------------------------------------------------------------------

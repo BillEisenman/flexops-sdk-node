@@ -1,6 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FlexOps, FlexOpsError, FlexOpsAuthError, FlexOpsRateLimitError, HazmatClassification, type RateRequest } from '../src/index.js';
+import {
+  FlexOps,
+  FlexOpsError,
+  FlexOpsAuthError,
+  FlexOpsRateLimitError,
+  HazmatClassification,
+  WebhookEventType,
+  type RateRequest,
+} from '../src/index.js';
 
 // Mock fetch for all tests
 const mockFetch = vi.fn();
@@ -234,12 +242,64 @@ describe('FlexOps Client', () => {
       );
 
       const client = createClient();
-      await client.webhooks.create({ url: 'https://example.com/hook', events: ['label.created'] });
+      await client.webhooks.create({
+        url: 'https://example.com/hook',
+        events: [WebhookEventType.LabelCreated, WebhookEventType.BatchCompleted],
+      });
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:5000/api/workspaces/ws-test-001/webhooks',
         expect.objectContaining({ method: 'POST' }),
       );
+      // The Gateway reads a comma-separated `eventTypes` (no spaces) and ignores `events`.
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toEqual({ url: 'https://example.com/hook', eventTypes: 'LabelCreated,BatchCompleted' });
+    });
+
+    it('omits eventTypes when no events are given, so the subscription receives every event', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-001' } }));
+
+      const client = createClient();
+      await client.webhooks.create({ url: 'https://example.com/hook' });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toEqual({ url: 'https://example.com/hook' });
+    });
+
+    it('sends updated events as eventTypes', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-001' } }));
+
+      const client = createClient();
+      await client.webhooks.update('wh-001', { events: [WebhookEventType.LabelCanceled], status: 'Active' });
+
+      expect(mockFetch.mock.calls[0][0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/webhooks/wh-001');
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toEqual({ eventTypes: 'LabelCanceled', status: 'Active' });
+    });
+
+    it.each([
+      [['label.created']],
+      [['LabelCreated', 'ShipmentCreated']],
+      [[]],
+    ])('refuses events %j that FlexOps never sends, without calling the API', async (events) => {
+      const client = createClient();
+      const call = client.webhooks.create({
+        url: 'https://example.com/hook',
+        events: events as unknown as WebhookEventType[],
+      });
+
+      await expect(call).rejects.toMatchObject({ name: 'FlexOpsError', code: 'UnknownWebhookEvent' });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('lists the event names the Gateway sends', () => {
+      expect(Object.values(WebhookEventType)).toEqual([
+        'LabelCreated',
+        'LabelCanceled',
+        'BatchCompleted',
+        'TrackingUpdated',
+        'TrackingDelivered',
+      ]);
     });
 
     it('gets wallet balance', async () => {

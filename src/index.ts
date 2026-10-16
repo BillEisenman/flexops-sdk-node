@@ -43,6 +43,7 @@ export type {
   OrderItem,
   WebhookSubscription,
   CreateWebhookRequest,
+  UpdateWebhookRequest,
   WalletBalance,
   InsuranceQuote,
   InsurancePolicy,
@@ -87,7 +88,7 @@ export type {
 } from './types.js';
 
 // Values
-export { HazmatClassification } from './types.js';
+export { HazmatClassification, WebhookEventType } from './types.js';
 
 // Errors
 export {

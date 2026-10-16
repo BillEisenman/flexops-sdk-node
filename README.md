@@ -212,15 +212,30 @@ await client.workspaces.inviteMember('newuser@company.com', 'Member');
 ## Webhooks
 
 ```typescript
-// Create a subscription
+import { WebhookEventType } from '@flexops/sdk';
+
+// Create a subscription. Omit `events` to receive every event.
 const webhook = await client.webhooks.create({
   url: 'https://your-app.com/webhooks/flexops',
-  events: ['label.created', 'tracking.updated', 'shipment.delivered'],
+  events: [WebhookEventType.LabelCreated, WebhookEventType.LabelCanceled, WebhookEventType.BatchCompleted],
 });
+const signingSecret = webhook.data.secret; // returned only on create; store it
 
 // Rotate the signing secret
 await client.webhooks.rotateSecret(webhook.data.id);
 ```
+
+FlexOps sends these events, named exactly as below. Names are PascalCase and matched exactly, so a
+name like `label.created` would never match; the SDK refuses unknown names with an
+`UnknownWebhookEvent` error.
+
+| Event | Sent when |
+|---|---|
+| `LabelCreated` | A live label is purchased (sandbox labels send nothing) |
+| `LabelCanceled` | A live label is voided |
+| `BatchCompleted` | A batch label job finishes |
+| `TrackingUpdated` | A USPS tracking scan arrives (USPS push-tracking pilot workspaces only) |
+| `TrackingDelivered` | A USPS package is delivered (USPS push-tracking pilot workspaces only) |
 
 ### Verifying deliveries
 
