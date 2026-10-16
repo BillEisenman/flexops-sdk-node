@@ -256,6 +256,38 @@ describe('FlexOps Client', () => {
       expect(body).toEqual({ url: 'https://example.com/hook', eventTypes: 'LabelCreated,BatchCompleted' });
     });
 
+    it('returns the signing secret from the bare 201 body the Gateway sends on create', async () => {
+      const created = {
+        id: 'wh-001',
+        url: 'https://example.com/hook',
+        description: null,
+        eventTypes: 'LabelCreated',
+        status: 'Active',
+        consecutiveFailures: 0,
+        createdAt: '2026-10-16T00:00:00Z',
+        updatedAt: null,
+        secret: 'whsec_created',
+      };
+      mockFetch.mockReturnValueOnce(jsonResponse(created, 201));
+
+      const client = createClient();
+      const result = await client.webhooks.create({ url: 'https://example.com/hook', events: ['LabelCreated'] });
+
+      expect(result).toEqual({ success: true, data: created });
+      expect(result.data?.secret).toBe('whsec_created');
+    });
+
+    it('still reads a create response wrapped in the ApiResponse envelope', async () => {
+      const envelope = { success: true, message: 'ok', data: { id: 'wh-001', secret: 'whsec_wrapped' } };
+      mockFetch.mockReturnValueOnce(jsonResponse(envelope));
+
+      const client = createClient();
+      const result = await client.webhooks.create({ url: 'https://example.com/hook' });
+
+      expect(result).toEqual(envelope);
+      expect(result.data?.secret).toBe('whsec_wrapped');
+    });
+
     it('omits eventTypes when no events are given, so the subscription receives every event', async () => {
       mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-001' } }));
 

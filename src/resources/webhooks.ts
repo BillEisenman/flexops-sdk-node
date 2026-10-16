@@ -39,11 +39,12 @@ export class WebhooksResource {
 
   /**
    * Create a webhook subscription. `events` is sent as the Gateway's comma-separated `eventTypes`;
-   * omit it to receive every event.
+   * omit it to receive every event. The result's `data.secret` is the signing secret, returned only here.
    * @throws FlexOpsError (`UnknownWebhookEvent`) when `events` is empty or names an event FlexOps does not send.
    */
   async create(request: CreateWebhookRequest): Promise<ApiResponse<WebhookSubscription>> {
-    return this.http.post(this.wsPath(''), toWireRequest(request));
+    const body = await this.http.post<unknown>(this.wsPath(''), toWireRequest(request));
+    return toEnvelope(body);
   }
 
   /**
@@ -159,6 +160,20 @@ function toWireRequest(request: CreateWebhookRequest | UpdateWebhookRequest): Re
     );
   }
   return { ...rest, eventTypes: [...new Set(events)].join(',') };
+}
+
+/**
+ * The Gateway answers create with `201` and the bare subscription, not the `{ success, data }` envelope
+ * its other webhook routes use. Wrap a bare body so `data.secret` holds the signing secret; pass an
+ * envelope through unchanged.
+ */
+function toEnvelope(body: unknown): ApiResponse<WebhookSubscription> {
+  if (isObject(body) && isObject(body.data)) return body as unknown as ApiResponse<WebhookSubscription>;
+  return { success: true, data: body as WebhookSubscription };
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 type NodeCrypto = typeof import('node:crypto');
