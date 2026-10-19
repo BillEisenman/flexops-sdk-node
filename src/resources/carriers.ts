@@ -13,10 +13,12 @@ import type { CanonicalLabelRequest, Label } from '../types.js';
 /**
  * Direct carrier operations via the VisionSuite Core Services API proxy.
  *
- * These methods provide pass-through access to carrier-specific endpoints
- * (USPS, UPS, FedEx, DHL) via the Gateway's ApiProxy route. Use the
- * high-level `client.shipping` methods for normalized operations, or
- * these carrier-specific methods when you need full control.
+ * Pass-throughs to carrier-specific endpoints (USPS, UPS, FedEx, DHL) via the Gateway's legacy
+ * ApiProxy route, deprecated and sunset on 2027-06-30. The GET lookups work with API keys. The
+ * writes are marked deprecated: they need a user token (`auth.login`), because the Gateway refuses
+ * API-key writes on the proxy with 403 `API_KEY_SCOPE_REQUIRED`. Label purchases through the proxy are
+ * closed (410); rates, labels, voids, pickups and scan forms go through `client.shipping`,
+ * `client.pickups` and `client.scanForms` for every carrier.
  */
 export class CarriersResource {
   constructor(private readonly http: HttpClient) {}
@@ -42,23 +44,53 @@ export class CarriersResource {
     zipCodeLookup: (params: Record<string, string>) =>
       this.http.get(this.proxy('api/v3/AddressValidation/getUspsZipCodeLookupByAddress'), params),
 
-    /** Search domestic shipping rates. */
+    /**
+     * Search domestic shipping rates.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getDomesticRates: (body: unknown) =>
       this.http.post(this.proxy('api/v3/RateCalculator/postUspsSearchDomesticBaseRates'), body),
 
-    /** Search domestic product eligibility. */
+    /**
+     * Search domestic product eligibility.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getDomesticProducts: (body: unknown) =>
       this.http.post(this.proxy('api/v3/RateCalculator/postUspsSearchEligibleDomesticProducts'), body),
 
-    /** Search domestic prices. */
+    /**
+     * Search domestic prices.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getDomesticPrices: (body: unknown) =>
       this.http.post(this.proxy('api/v3/RateCalculator/postUspsSearchEligibleDomesticPrices'), body),
 
-    /** Search international rates. */
+    /**
+     * Search international rates.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getInternationalRates: (body: unknown) =>
       this.http.post(this.proxy('api/v3/RateCalculator/postUspsSearchInternationalBaseRates'), body),
 
-    /** Search international prices. */
+    /**
+     * Search international prices.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getInternationalPrices: (body: unknown) =>
       this.http.post(this.proxy('api/v3/RateCalculator/postUspsSearchEligibleInternationalPrices'), body),
 
@@ -69,19 +101,23 @@ export class CarriersResource {
     createDomesticLabel: (body: unknown): Promise<Label> =>
       new ShippingResource(this.http, () => undefined).createLabel(body as CanonicalLabelRequest),
 
-    /** Generate a domestic return label. */
-    createReturnLabel: (body: unknown) =>
-      this.http.post(this.proxy('api/v3/Shipping/postUspsGenerateDomesticReturnsShippingLabel'), body),
-
-    /** Generate an international shipping label. */
-    createInternationalLabel: (body: unknown) =>
-      this.http.post(this.proxy('api/v3/Shipping/postUspsGenerateInternationalShippingLabel'), body),
-
-    /** Cancel a domestic label. */
+    /**
+     * Cancel a domestic label.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     cancelDomesticLabel: () =>
       this.http.delete(this.proxy('api/v3/Shipping/cancelUspsDomesticShipmentLabel')),
 
-    /** Cancel an international label. */
+    /**
+     * Cancel an international label.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     cancelInternationalLabel: () =>
       this.http.delete(this.proxy('api/v3/Shipping/cancelUspsInternationalShipmentLabel')),
 
@@ -93,15 +129,33 @@ export class CarriersResource {
     trackDetail: (params: Record<string, string>) =>
       this.http.get(this.proxy('api/v3/Tracking/getUspsTrackingDetailInformation'), params),
 
-    /** Schedule a carrier pickup. */
+    /**
+     * Schedule a carrier pickup.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     createPickup: (body: unknown) =>
       this.http.post(this.proxy('api/v3/CarrierPickup/postUspsCreateCarrierPickupSchedule'), body),
 
-    /** Cancel a pickup. */
+    /**
+     * Cancel a pickup.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     cancelPickup: () =>
       this.http.delete(this.proxy('api/v3/CarrierPickup/cancelUspsCarrierPickupSchedule')),
 
-    /** Create a scan form. */
+    /**
+     * Create a scan form.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     createScanForm: (body: unknown) =>
       this.http.post(this.proxy('api/v3/ScanForm/postUspsCreateScanFormLabelShipment'), body),
 
@@ -123,51 +177,107 @@ export class CarriersResource {
   // -----------------------------------------------------------------------
 
   readonly ups = {
-    /** Verify an address via UPS. */
+    /**
+     * Verify an address via UPS.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     validateAddress: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsVerifyAddress'), body),
 
-    /** Get UPS rate quotes. */
+    /**
+     * Get UPS rate quotes.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getRates: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsRateCheck'), body),
-
-    /** Generate a UPS shipping label. */
-    createLabel: (body: unknown) =>
-      this.http.post(this.proxy('api/v2/ShippingLabel/generateNewUpsShipLabel'), body),
 
     /** Track a UPS shipment. */
     track: (params: Record<string, string>) =>
       this.http.get(this.proxy('api/v2/ShippingLabel/getSingleUpsTrackingDetail'), params),
 
-    /** Create a UPS pickup. */
+    /**
+     * Create a UPS pickup.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     createPickup: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsCreatePickup'), body),
 
-    /** Cancel a UPS pickup. */
+    /**
+     * Cancel a UPS pickup.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     cancelPickup: () =>
       this.http.delete(this.proxy('api/v2/ShippingLabel/deleteUpsPickup')),
 
-    /** Get UPS transit times. */
+    /**
+     * Get UPS transit times.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getTransitTimes: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsGetTransitTimes'), body),
 
-    /** Get UPS landed cost quote (international). */
+    /**
+     * Get UPS landed cost quote (international).
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getLandedCost: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsGetLandedCostQuote'), body),
 
-    /** Search UPS locations. */
+    /**
+     * Search UPS locations.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     searchLocations: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsSearchLocations'), body),
 
-    /** Upload paperless trade document. */
+    /**
+     * Upload paperless trade document.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     uploadDocument: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsUploadPaperlessDocument'), body),
 
-    /** Create UPS freight shipment. */
+    /**
+     * Create UPS freight shipment.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     createFreightShipment: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsCreateFreightShipment'), body),
 
-    /** Get UPS freight rate. */
+    /**
+     * Get UPS freight rate.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getFreightRate: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postUpsGetFreightRate'), body),
   };
@@ -177,89 +287,195 @@ export class CarriersResource {
   // -----------------------------------------------------------------------
 
   readonly fedex = {
-    /** Validate a domestic address via FedEx. */
+    /**
+     * Validate a domestic address via FedEx.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     validateAddress: (body: unknown) =>
       this.http.post(this.proxy('api/v3/AddressValidation/postFedExValidateAndCorrectDomesticAddress'), body),
 
-    /** Validate a postal code. */
+    /**
+     * Validate a postal code.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     validatePostalCode: (body: unknown) =>
       this.http.post(this.proxy('api/v3/AddressValidation/postFedExValidatePostalCode'), body),
 
-    /** Get FedEx rate and transit times. */
+    /**
+     * Get FedEx rate and transit times.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getRates: (body: unknown) =>
       this.http.post(this.proxy('api/v3/RateCalculator/postRetrieveFedExRateAndTransitTimesAsync'), body),
 
-    /** Create a FedEx shipment. */
-    createShipment: (body: unknown) =>
-      this.http.post(this.proxy('api/v3/Shipping/postFedExCreateNewShipment'), body),
-
-    /** Cancel a FedEx shipment. */
+    /**
+     * Cancel a FedEx shipment.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     cancelShipment: (body: unknown) =>
       this.http.put(this.proxy('api/v3/Shipping/putFedExCancelShipment'), body),
 
-    /** Validate a shipment (dry run). */
+    /**
+     * Validate a shipment (dry run).
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     validateShipment: (body: unknown) =>
       this.http.post(this.proxy('api/v3/Shipping/postFedExValidateShipment'), body),
 
-    /** Create a return shipment. */
-    createReturnShipment: (body: unknown) =>
-      this.http.post(this.proxy('api/v3/Shipping/postFedExCreateNewReturnShipment'), body),
-
-    /** Track by tracking number. */
+    /**
+     * Track by tracking number.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     track: (body: unknown) =>
       this.http.post(this.proxy('api/v3/Tracking/postFedExRetrieveTrackingInfoByTrackingNumber'), body),
 
-    /** Track multi-piece shipment. */
+    /**
+     * Track multi-piece shipment.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     trackMultiPiece: (body: unknown) =>
       this.http.post(this.proxy('api/v3/Tracking/postFedExRetrieveTrackingInfoForMultiPieceShipment'), body),
 
-    /** Register for tracking notifications. */
+    /**
+     * Register for tracking notifications.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     registerTrackingNotification: (body: unknown) =>
       this.http.post(this.proxy('api/v3/Tracking/postFedExRegisterForTrackingNotification'), body),
 
-    /** Create a carrier pickup. */
+    /**
+     * Create a carrier pickup.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     createPickup: (body: unknown) =>
       this.http.post(this.proxy('api/v3/CarrierPickup/postFedExCreateCarrierPickupRequest'), body),
 
-    /** Cancel a pickup. */
+    /**
+     * Cancel a pickup.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     cancelPickup: (body: unknown) =>
       this.http.put(this.proxy('api/v3/CarrierPickup/putFedExCancelCarrierPickupRequest'), body),
 
-    /** Search valid locations. */
+    /**
+     * Search valid locations.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     searchLocations: (body: unknown) =>
       this.http.post(this.proxy('api/v3/LocationSearch/postFedExSearchValidLocations'), body),
 
-    /** Get service standards and transit times. */
+    /**
+     * Get service standards and transit times.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getServiceStandards: (body: unknown) =>
       this.http.post(this.proxy('api/v3/ServiceStandards/postFedExRetrieveServicesAndTransitTimes'), body),
 
-    /** Get freight rate quote. */
+    /**
+     * Get freight rate quote.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getFreightRate: (body: unknown) =>
       this.http.post(this.proxy('api/v3/Freight/postFedExGetFreightRateQuote'), body),
 
-    /** Create freight shipment. */
+    /**
+     * Create freight shipment.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     createFreightShipment: (body: unknown) =>
       this.http.post(this.proxy('api/v3/Freight/postFedExCreateFreightShipment'), body),
 
-    /** Ground close with documents. */
+    /**
+     * Ground close with documents.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     groundClose: (body: unknown) =>
       this.http.post(this.proxy('api/v3/GroundClose/postFedExCloseWithDocuments'), body),
 
-    /** Upload trade documents. */
+    /**
+     * Upload trade documents.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     uploadTradeDocuments: (body: unknown) =>
       this.http.post(this.proxy('api/v3/Trade/postFedExUploadTradeDocuments'), body),
 
     // --- Open Ship (multi-package) ---
 
-    /** Create an open shipment. */
+    /**
+     * Create an open shipment.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     createOpenShipment: (body: unknown) =>
       this.http.post(this.proxy('api/v3/OpenShip/postFedExCreateOpenShipment'), body),
 
-    /** Add packages to an open shipment. */
+    /**
+     * Add packages to an open shipment.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     addPackagesToOpenShipment: (body: unknown) =>
       this.http.post(this.proxy('api/v3/OpenShip/postFedExAddPackagesToOpenShipment'), body),
 
-    /** Confirm and finalize an open shipment. */
+    /**
+     * Confirm and finalize an open shipment.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     confirmOpenShipment: (body: unknown) =>
       this.http.post(this.proxy('api/v3/OpenShip/postFedExConfirmOpenShipment'), body),
   };
@@ -277,17 +493,19 @@ export class CarriersResource {
     getRates: (params: Record<string, string>) =>
       this.http.get(this.proxy('api/v2/ShippingLabel/getDhlRates'), params),
 
-    /** Get multi-piece rates. */
+    /**
+     * Get multi-piece rates.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     getMultiPieceRates: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postDhlMultiPieceRates'), body),
 
     /** Get DHL products/services. */
     getProducts: (params: Record<string, string>) =>
       this.http.get(this.proxy('api/v2/ShippingLabel/getDhlProducts'), params),
-
-    /** Create a DHL shipment (label). */
-    createShipment: (body: unknown) =>
-      this.http.post(this.proxy('api/v2/ShippingLabel/postDhlCreateShipment'), body),
 
     /** Track a DHL shipment. */
     track: (params: Record<string, string>) =>
@@ -297,27 +515,53 @@ export class CarriersResource {
     trackMultiple: (params: Record<string, string>) =>
       this.http.get(this.proxy('api/v2/ShippingLabel/getDhlTrackMultipleShipments'), params),
 
-    /** Create a DHL pickup. */
+    /**
+     * Create a DHL pickup.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     createPickup: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postDhlCreatePickup'), body),
 
-    /** Update a DHL pickup. */
-    updatePickup: (body: unknown) =>
-      this.http.patch(this.proxy('api/v2/ShippingLabel/patchDhlUpdatePickup'), body),
-
-    /** Cancel a DHL pickup. */
+    /**
+     * Cancel a DHL pickup.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     cancelPickup: () =>
       this.http.delete(this.proxy('api/v2/ShippingLabel/deleteDhlPickup')),
 
-    /** Calculate landed cost (duties/taxes). */
+    /**
+     * Calculate landed cost (duties/taxes).
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     calculateLandedCost: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postDhlCalculateLandedCost'), body),
 
-    /** Screen a shipment for compliance. */
+    /**
+     * Screen a shipment for compliance.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     screenShipment: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postDhlScreenShipment'), body),
 
-    /** Upload an invoice. */
+    /**
+     * Upload an invoice.
+     *
+     * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
+     *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
+     *   cover this.
+     */
     uploadInvoice: (body: unknown) =>
       this.http.post(this.proxy('api/v2/ShippingLabel/postDhlUploadInvoice'), body),
 

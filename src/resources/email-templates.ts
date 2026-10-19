@@ -8,57 +8,54 @@
 
 import type { HttpClient } from '../http.js';
 import type {
-  ApiResponse,
   EmailTemplate,
-  CreateEmailTemplateRequest,
-  UpdateEmailTemplateRequest,
+  EmailTemplatePreview,
+  EmailTemplatePreviewRequest,
+  UpsertEmailTemplateRequest,
 } from '../types.js';
 
+/**
+ * Tracking email templates: one per tracking event (`TrackingEmailEvent`), sent to the recipient
+ * when that event happens.
+ *
+ * Reads work with any API key. Writes, including `preview`, need a user token (`auth.login`) or an
+ * API key granted `email-templates:write`; any other key gets 403 `API_KEY_SCOPE_REQUIRED`.
+ * Responses are the bare objects, not the `{ success, data }` envelope.
+ */
 export class EmailTemplatesResource {
   constructor(
     private readonly http: HttpClient,
     private readonly getWorkspaceId: () => string | undefined,
   ) {}
 
-  private wsPath(suffix: string): string {
+  private wsPath(suffix = ''): string {
     const id = this.getWorkspaceId();
     if (!id) throw new Error('workspaceId is required.');
-    return `/api/workspaces/${id}/shipment-email-templates/${suffix}`;
+    return `/api/workspaces/${id}/email-templates${suffix ? `/${suffix}` : ''}`;
   }
 
-  /** List all email templates. */
-  async list(): Promise<ApiResponse<EmailTemplate[]>> {
-    return this.http.get(this.wsPath(''));
+  /** List the workspace's templates. */
+  async list(): Promise<EmailTemplate[]> {
+    return this.http.get(this.wsPath());
   }
 
-  /** Get an email template by ID. */
-  async get(id: string): Promise<ApiResponse<EmailTemplate>> {
-    return this.http.get(this.wsPath(id));
+  /** Get one template. */
+  async get(templateId: string): Promise<EmailTemplate> {
+    return this.http.get(this.wsPath(templateId));
   }
 
-  /** Create an email template. */
-  async create(request: CreateEmailTemplateRequest): Promise<ApiResponse<EmailTemplate>> {
-    return this.http.post(this.wsPath(''), request);
+  /** Create or replace the template for `request.eventType`. */
+  async upsert(request: UpsertEmailTemplateRequest): Promise<EmailTemplate> {
+    return this.http.put(this.wsPath(), request);
   }
 
-  /** Update an email template. */
-  async update(
-    id: string,
-    request: UpdateEmailTemplateRequest,
-  ): Promise<ApiResponse<EmailTemplate>> {
-    return this.http.put(this.wsPath(id), request);
+  /** Delete a template; that event then uses the FlexOps default email. */
+  async delete(templateId: string): Promise<void> {
+    await this.http.delete(this.wsPath(templateId));
   }
 
-  /** Delete an email template. */
-  async delete(id: string): Promise<ApiResponse<unknown>> {
-    return this.http.delete(this.wsPath(id));
-  }
-
-  /** Preview a rendered email template with optional sample data. */
-  async preview(
-    id: string,
-    context?: Record<string, unknown>,
-  ): Promise<ApiResponse<{ html: string; subject: string }>> {
-    return this.http.post(this.wsPath(`${id}/preview`), context ?? {});
+  /** Render a subject and body with sample shipment data, without saving anything. */
+  async preview(request: EmailTemplatePreviewRequest): Promise<EmailTemplatePreview> {
+    return this.http.post(this.wsPath('preview'), request);
   }
 }

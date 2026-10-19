@@ -7,8 +7,8 @@ Official Node.js/TypeScript SDK for the [FlexOps](https://flexops.io) multi-carr
 - Full TypeScript support with complete type definitions
 - All 4 carriers: **USPS**, **UPS**, **FedEx**, **DHL**
 - High-level shipping operations (rate shopping, labels, tracking)
-- Direct carrier-specific endpoint access (214 VisionSuite endpoints)
-- Automatic retry with exponential backoff
+- The documented FlexOps API only: every method is checked against the published OpenAPI in CI
+- Retries that cannot buy twice: writes carry an `Idempotency-Key` (see [Retries](#retries))
 - JWT and API key authentication
 - Webhook signature verification (HMAC-SHA256)
 - ESM and CommonJS support
@@ -98,7 +98,7 @@ try {
 ```typescript
 const tracking = await client.shipping.track('9400111899223456789012');
 
-for (const event of tracking.data.events) {
+for (const event of tracking.events) {
   console.log(`${event.timestamp}: ${event.description}`);
 }
 ```
@@ -115,8 +115,10 @@ const result = await client.shipping.validateAddress({
   country: 'US',
 });
 
-if (!result.data.isValid) {
-  console.log('Corrected:', result.data.correctedAddress);
+if (result.validationUnavailable) {
+  console.log('Validation is unavailable right now; isValid is not a verdict.');
+} else if (!result.isValid) {
+  console.log('Suggested:', result.suggestedAddress, result.warnings);
 }
 ```
 
@@ -137,76 +139,44 @@ const batch = await client.shipping.createBatch({
 const status = await client.shipping.getBatchStatus(batch.data.jobId);
 ```
 
-## Direct Carrier Access
+## Carrier-Specific Calls
 
-For full control, use carrier-specific endpoints:
+Rates, labels, voids, pickups and scan forms go through `client.shipping`, `client.pickups` and
+`client.scanForms`, which work for every carrier and with API keys. `client.carriers` reaches
+carrier-specific endpoints through the Gateway's legacy pass-through, which is deprecated and
+retired on 2027-06-30:
 
-### USPS
-
-```typescript
-// Domestic label with full USPS payload
-const label = await client.carriers.usps.createDomesticLabel({
-  imageType: 'PDF',
-  mailClass: 'PRIORITY_MAIL',
-  weightInOunces: 16,
-  // ... full USPS API payload
-});
-
-// Rate calculation
-const rates = await client.carriers.usps.getDomesticRates({
-  originZIPCode: '10001',
-  destinationZIPCode: '90210',
-  weight: 1.0,
-});
-
-// Find drop-off locations
-const locations = await client.carriers.usps.findDropOffLocations({
-  zipCode: '10001',
-});
-```
-
-### UPS
+- **Lookups (GET)** work with API keys.
+- **Writes** (for example `carriers.usps.getDomesticRates`, `carriers.fedex.createPickup`) are marked
+  `@deprecated`. They need a user token (`auth.login`): the Gateway answers an API key with 403
+  `API_KEY_SCOPE_REQUIRED`. Move them to the native resources above.
+- **Label purchases** through the pass-through are closed by the Gateway (410), so the SDK has no
+  carrier-specific label methods; buy labels with `client.shipping.createLabel`.
 
 ```typescript
-const label = await client.carriers.ups.createLabel({ /* UPS payload */ });
-const rates = await client.carriers.ups.getRates({ /* UPS payload */ });
-const tracking = await client.carriers.ups.track({ trackingNumber: '1Z...' });
-const transitTimes = await client.carriers.ups.getTransitTimes({ /* payload */ });
-```
-
-### FedEx
-
-```typescript
-const shipment = await client.carriers.fedex.createShipment({ /* FedEx payload */ });
-const rates = await client.carriers.fedex.getRates({ /* FedEx payload */ });
-const tracking = await client.carriers.fedex.track({ /* payload */ });
-
-// Multi-package (Open Ship)
-await client.carriers.fedex.createOpenShipment({ /* payload */ });
-await client.carriers.fedex.addPackagesToOpenShipment({ /* payload */ });
-await client.carriers.fedex.confirmOpenShipment({ /* payload */ });
-```
-
-### DHL
-
-```typescript
-const shipment = await client.carriers.dhl.createShipment({ /* DHL payload */ });
-const rates = await client.carriers.dhl.getRates({ countryCode: 'US', weight: '1' });
-const tracking = await client.carriers.dhl.track({ shipmentTrackingNumber: '123456' });
-const landedCost = await client.carriers.dhl.calculateLandedCost({ /* payload */ });
+const city = await client.carriers.usps.cityStateLookup('10001');
+const locations = await client.carriers.usps.findDropOffLocations({ zipCode: '10001' });
+const upsTracking = await client.carriers.ups.track({ trackingNumber: '1Z...' });
+const dhlRates = await client.carriers.dhl.getRates({ countryCode: 'US', weight: '1' });
 ```
 
 ## Workspace Management
 
 ```typescript
+import { WorkspaceRole } from '@flexops/sdk';
+
 // List workspaces
 const workspaces = await client.workspaces.list();
 
 // Switch workspace
 client.workspaceId = 'different-workspace-id';
 
-// Invite a member
-await client.workspaces.inviteMember('newuser@company.com', 'Member');
+// Members and pending invites
+const { data } = await client.workspaces.listMembers();
+console.log(data.members.length, data.pendingInvites.length);
+
+// Invite a member (roles are numbers on the wire; use WorkspaceRole)
+await client.workspaces.inviteMember('newuser@company.com', WorkspaceRole.Member);
 ```
 
 ## Webhooks
@@ -307,28 +277,20 @@ curl -X POST https://gateway.flexops.io/api/shipping/labels \
 curl https://gateway.flexops.io/api/shipping/track/9400111899223456789012 \
   -H "X-API-Key: fxk_live_..."
 
-# Cancel a label (via the unified carrier-agnostic endpoint)
-curl -X DELETE https://gateway.flexops.io/api/v3.0/shipping/Usps/cancel/9400111899223456789012 \
+# Cancel (void) a label
+curl -X DELETE "https://gateway.flexops.io/api/shipping/labels/{labelId}?carrierCode=usps" \
   -H "X-API-Key: fxk_live_..."
 ```
 
 Use an `fxk_test_...` key instead of `fxk_live_...` to hit the sandbox environment; mock carriers respond, no real charges, no real labels.
 
-## Wallet & Billing
+## Wallet
+
+The balance is read-only here; funding and auto-reload are managed in the FlexOps portal.
 
 ```typescript
-const balance = await client.wallet.getBalance();
-console.log(`Balance: $${balance.data.balance}`);
-
-// Add funds
-await client.wallet.addFunds(100.00);
-
-// Configure auto-reload
-await client.wallet.configureAutoReload({
-  enabled: true,
-  threshold: 25.00,
-  amount: 100.00,
-});
+const balance = await client.wallet.getBalance(); // for client.workspaceId
+console.log(`Balance: $${balance.balance}`);
 ```
 
 ## Insurance
@@ -339,45 +301,92 @@ const providers = await client.insurance.getProviders();
 // Returns ["FlexOps"] or ["FlexOps", "U-PIC"]
 
 // Get a quote
-const quote = await client.insurance.getQuote({
-  carrier: 'USPS',
-  declaredValue: 500.00,
-  provider: 'FlexOps',
-});
+const quote = await client.insurance.getQuote({ carrierCode: 'usps', declaredValue: 500.00 });
 
-// Purchase insurance
+// Purchase insurance (premium charged to the wallet). A shipment already insured is refused
+// with 409 ALREADY_EXISTS.
 const policy = await client.insurance.purchase({
   trackingNumber: '9400111899223456789012',
-  carrier: 'USPS',
+  carrierCode: 'usps',
   declaredValue: 500.00,
 });
+
+// File a claim
+await client.insurance.fileClaim({ policyId: policy.data.policyId, claimReason: 'Lost in transit', claimAmount: 500.00 });
+```
+
+## Carbon Offsets
+
+```typescript
+const quote = await client.carbonOffsets.quote({ weightLbs: 2, distanceMiles: 800 });
+const offset = await client.carbonOffsets.purchase({ trackingNumber: '9400...', weightLbs: 2, distanceMiles: 800 });
+const summary = await client.carbonOffsets.getSummary();
 ```
 
 ## Returns & RMA
 
 ```typescript
-// Create a return authorization
+// Create a return authorization for an order (numeric order id)
 const rma = await client.returns.create({
-  orderId: 'ORD-12345',
+  orderId: 12345,
   reason: 'Defective product',
   items: [{ sku: 'WIDGET-001', quantity: 1 }],
 });
 
-// Approve and generate return label
-await client.returns.approve(rma.data.rmaId);
-// Send the package weight and size. Anything left out comes from the workspace's default
-// shipping preset; with no preset the API answers 400 PackageMeasurementsRequired.
-await client.returns.generateLabel(rma.data.rmaId, {
+// Generate the return label. Send the package weight and size. Anything left out comes from the
+// workspace's default shipping preset; with no preset the API answers 400 PackageMeasurementsRequired.
+await client.returns.generateLabel('RMA-12345', {
   weightOz: 16,
   lengthIn: 10,
   widthIn: 8,
   heightIn: 4,
 });
 
-// Mark items as received
-await client.returns.markReceived(rma.data.rmaId, [
-  { sku: 'WIDGET-001', quantity: 1, condition: 'damaged' },
-]);
+// Record the inspected items at a warehouse (disposition 0 restock, 1 refurbish, 2 dispose)
+await client.returns.markReceived(rmaId, {
+  rmaNumber: 'RMA-12345',
+  warehouseId: 1,
+  inspectedItems: [{ partNumber: 'WIDGET-001', quantity: 1, disposition: 2 }],
+});
+```
+
+Approving, rejecting, cancelling and refunding returns are done in the FlexOps portal.
+
+## Recurring Shipments, Report Schedules and Email Templates
+
+Reads work with any API key. Writes need a user token (`auth.login`) or an API key granted the
+resource's write permission: `recurring-shipments:write`, `report-schedules:write` or
+`email-templates:write`. Other keys get 403 `API_KEY_SCOPE_REQUIRED`.
+
+```typescript
+import { RecurrenceInterval, ReportFormat, ReportFrequency, TrackingEmailEvent } from '@flexops/sdk';
+
+// Ship the same package to a saved address every week
+const recurring = await client.recurringShipments.create({
+  name: 'Weekly refill',
+  addressId: 'address-guid',
+  presetId: 'preset-guid',
+  interval: RecurrenceInterval.Weekly,
+  firstRunUtc: '2026-11-02T15:00:00Z',
+});
+await client.recurringShipments.trigger(recurring.id); // run now (creates an order)
+
+// Email a shipments report every Monday at 08:00 UTC
+await client.reportSchedules.create({
+  reportType: 'shipments',
+  format: ReportFormat.Csv,
+  frequencyType: ReportFrequency.Weekly,
+  dayOfWeek: 1,
+  timeOfDayUtc: '08:00:00',
+  recipientEmails: 'ops@example.com',
+});
+
+// Customize the "delivered" tracking email
+await client.emailTemplates.upsert({
+  eventType: TrackingEmailEvent.Delivered,
+  subjectTemplate: 'Your order has arrived',
+  htmlBodyTemplate: '<p>Delivered.</p>',
+});
 ```
 
 ## Analytics
@@ -400,7 +409,7 @@ const performance = await client.analytics.deliveryPerformance();
 // Create a shipping rule
 await client.rules.create({
   name: 'Route light packages via USPS',
-  isActive: true,
+  isEnabled: true,
   priority: 1,
   conditions: [
     { field: 'Weight', operator: 'LessThan', value: '16' },
@@ -411,6 +420,9 @@ await client.rules.create({
     { type: 'SetService', value: 'GROUND_ADVANTAGE' },
   ],
 });
+
+// Dry-run the rules against a sample shipment
+const result = await client.rules.test({ weightOz: 12, declaredValue: 25, destinationCountry: 'US', itemCount: 1 });
 ```
 
 ## Error Handling
@@ -450,6 +462,19 @@ const client = new FlexOps({
   },
 });
 ```
+
+## Retries
+
+Requests that fail with a network error, a timeout or a 429/502/503/504 are retried with
+exponential backoff (`retry.maxRetries`, default 3). Retries are safe for purchases:
+
+- Every `POST`, `PUT` and `PATCH` sends an `Idempotency-Key`: yours if you pass one, otherwise one
+  generated per call and reused on every retry of that call. The Gateway answers a repeated key with
+  the first result instead of running the request again.
+- A write is never retried after a `500`, whose result the Gateway does not replay. A `409
+  IDEMPOTENCY_CONFLICT` (the first attempt is still running) is retried. A key reused with a different
+  request gets `422 IDEMPOTENCY_KEY_REUSED`, which is not retried: use a new key for a new request.
+- `DELETE` is retried only on `429`. `GET` is retried on every status in `retryableStatusCodes`.
 
 ## OpenAPI Spec Generation
 

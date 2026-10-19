@@ -8,6 +8,7 @@
 
 import { FlexOpsError, WebhookEventType } from '../types.js';
 import type { HttpClient } from '../http.js';
+import { loadNodeCrypto } from '../node-crypto.js';
 import type {
   ApiResponse,
   WebhookSubscription,
@@ -30,11 +31,6 @@ export class WebhooksResource {
   /** List all webhook subscriptions for the workspace. */
   async list(): Promise<ApiResponse<WebhookSubscription[]>> {
     return this.http.get(this.wsPath(''));
-  }
-
-  /** Get a webhook subscription by ID. */
-  async get(webhookId: string): Promise<ApiResponse<WebhookSubscription>> {
-    return this.http.get(this.wsPath(webhookId));
   }
 
   /**
@@ -68,6 +64,11 @@ export class WebhooksResource {
   /** List delivery logs for a webhook. */
   async listDeliveryLogs(webhookId: string): Promise<ApiResponse<unknown[]>> {
     return this.http.get(this.wsPath(`${webhookId}/deliveries`));
+  }
+
+  /** Send a test event to a webhook's endpoint. */
+  async test(webhookId: string): Promise<ApiResponse<unknown>> {
+    return this.http.post(this.wsPath(`${webhookId}/test`));
   }
 
   /**
@@ -122,7 +123,7 @@ export class WebhooksResource {
     // value) cannot match and must not reach timingSafeEqual, which throws on a length mismatch.
     if (!/^[0-9a-f]{64}$/.test(hex)) return false;
 
-    const crypto = loadNodeCrypto();
+    const crypto = loadNodeCrypto('Webhook signature verification');
     const expected = crypto.createHmac('sha256', secret).update(`${ts}.`, 'utf8').update(payload).digest();
     return crypto.timingSafeEqual(Buffer.from(hex, 'hex'), expected);
   }
@@ -174,22 +175,4 @@ function toEnvelope(body: unknown): ApiResponse<WebhookSubscription> {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-type NodeCrypto = typeof import('node:crypto');
-
-/**
- * Loads node:crypto lazily so importing the SDK in a browser bundle does not pull it in.
- * `process.getBuiltinModule` works in both the ESM and CJS builds; `require` is only the CJS
- * fallback for older Node. The ESM build cannot use `require` at all (tsup's shim throws), which
- * is why the previous `require`-only helper always returned false when imported as an ES module.
- */
-function loadNodeCrypto(): NodeCrypto {
-  const fromProcess = globalThis.process?.getBuiltinModule?.('node:crypto');
-  if (fromProcess) return fromProcess;
-  if (typeof require === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('node:crypto') as NodeCrypto;
-  }
-  throw new Error('Webhook signature verification needs node:crypto (Node.js 20.16+ for the ES module build).');
 }

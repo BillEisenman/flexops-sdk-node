@@ -16,18 +16,17 @@ import { WebhooksResource } from './resources/webhooks.js';
 import { WalletResource } from './resources/wallet.js';
 import { InsuranceResource } from './resources/insurance.js';
 import { ReturnsResource } from './resources/returns.js';
-import { ApiKeysResource } from './resources/api-keys.js';
 import { AnalyticsResource } from './resources/analytics.js';
 import { OrdersResource } from './resources/orders.js';
 import { InventoryResource } from './resources/inventory.js';
 import { PickupsResource } from './resources/pickups.js';
 import { ScanFormsResource } from './resources/scan-forms.js';
 import { RulesResource } from './resources/rules.js';
-import { OffsetResource } from './resources/offsets.js';
-import { HsCodesResource } from './resources/hs-codes.js';
+import { CarbonOffsetsResource } from './resources/carbon-offsets.js';
 import { RecurringShipmentsResource } from './resources/recurring-shipments.js';
+import { ReportSchedulesResource } from './resources/report-schedules.js';
 import { EmailTemplatesResource } from './resources/email-templates.js';
-import { ReportsResource } from './resources/reports.js';
+import { HsCodesResource } from './resources/hs-codes.js';
 
 /**
  * FlexOps Platform SDK Client
@@ -68,20 +67,10 @@ import { ReportsResource } from './resources/reports.js';
  * // Token is automatically stored and used for subsequent requests
  * ```
  *
- * @example Direct carrier operations
+ * @example Carrier-specific reads
  * ```typescript
- * // USPS domestic label (full carrier-specific payload)
- * const uspsLabel = await client.carriers.usps.createDomesticLabel({
- *   imageType: 'PDF',
- *   mailClass: 'PRIORITY_MAIL',
- *   weightInOunces: 16,
- *   // ... full USPS payload
- * });
- *
- * // FedEx rate quote
- * const fedexRates = await client.carriers.fedex.getRates({
- *   // ... full FedEx payload
- * });
+ * // USPS tracking detail through the read-only carrier pass-through
+ * const tracking = await client.carriers.usps.trackDetail({ trackingNumber: '9400...' });
  * ```
  */
 export class FlexOps {
@@ -97,18 +86,17 @@ export class FlexOps {
   readonly wallet: WalletResource;
   readonly insurance: InsuranceResource;
   readonly returns: ReturnsResource;
-  readonly apiKeys: ApiKeysResource;
   readonly analytics: AnalyticsResource;
   readonly orders: OrdersResource;
   readonly inventory: InventoryResource;
   readonly pickups: PickupsResource;
   readonly scanForms: ScanFormsResource;
   readonly rules: RulesResource;
-  readonly offsets: OffsetResource;
-  readonly hsCodes: HsCodesResource;
+  readonly carbonOffsets: CarbonOffsetsResource;
   readonly recurringShipments: RecurringShipmentsResource;
+  readonly reportSchedules: ReportSchedulesResource;
   readonly emailTemplates: EmailTemplatesResource;
-  readonly reports: ReportsResource;
+  readonly hsCodes: HsCodesResource;
 
   constructor(config: FlexOpsConfig = {}) {
     this.http = new HttpClient(config);
@@ -124,18 +112,17 @@ export class FlexOps {
     this.wallet = new WalletResource(this.http, getWsId);
     this.insurance = new InsuranceResource(this.http, getWsId);
     this.returns = new ReturnsResource(this.http, getWsId);
-    this.apiKeys = new ApiKeysResource(this.http, getWsId);
     this.analytics = new AnalyticsResource(this.http);
     this.orders = new OrdersResource(this.http);
     this.inventory = new InventoryResource(this.http);
     this.pickups = new PickupsResource(this.http, getWsId);
     this.scanForms = new ScanFormsResource(this.http, getWsId);
     this.rules = new RulesResource(this.http, getWsId);
-    this.offsets = new OffsetResource(this.http, getWsId);
-    this.hsCodes = new HsCodesResource(this.http, getWsId);
+    this.carbonOffsets = new CarbonOffsetsResource(this.http, getWsId);
     this.recurringShipments = new RecurringShipmentsResource(this.http, getWsId);
+    this.reportSchedules = new ReportSchedulesResource(this.http, getWsId);
     this.emailTemplates = new EmailTemplatesResource(this.http, getWsId);
-    this.reports = new ReportsResource(this.http, getWsId);
+    this.hsCodes = new HsCodesResource(this.http);
   }
 
   /** Get or set the active workspace ID. */

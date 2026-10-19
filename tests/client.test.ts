@@ -7,6 +7,11 @@ import {
   FlexOpsRateLimitError,
   HazmatClassification,
   WebhookEventType,
+  WorkspaceRole,
+  RecurrenceInterval,
+  ReportFormat,
+  ReportFrequency,
+  TrackingEmailEvent,
   type RateRequest,
 } from '../src/index.js';
 
@@ -69,7 +74,7 @@ describe('FlexOps Client', () => {
         jsonResponse({
           success: true,
           data: {
-            accessToken: 'jwt-token-123',
+            token: 'jwt-token-123',
             refreshToken: 'refresh-456',
             expiresAt: '2026-03-05T00:00:00Z',
             userId: 'user-001',
@@ -84,7 +89,7 @@ describe('FlexOps Client', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.accessToken).toBe('jwt-token-123');
+      expect(result.data?.token).toBe('jwt-token-123');
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:5000/api/Account/login',
         expect.objectContaining({
@@ -137,7 +142,7 @@ describe('FlexOps Client', () => {
 
     it('validates an address', async () => {
       // Raw AddressValidationResult (no envelope).
-      mockFetch.mockReturnValueOnce(jsonResponse({ isValid: true, messages: [] }));
+      mockFetch.mockReturnValueOnce(jsonResponse({ isValid: true, warnings: [], validationUnavailable: false }));
 
       const client = createClient();
       const result = await client.shipping.validateAddress({
@@ -151,7 +156,7 @@ describe('FlexOps Client', () => {
 
       expect(result.isValid).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:5000/api/shipping/addresses/validate',
+        'http://localhost:5000/api/addresses/validate',
         expect.objectContaining({ method: 'POST' }),
       );
     });
@@ -188,28 +193,27 @@ describe('FlexOps Client', () => {
       );
     });
 
-    it('calls FedEx rate calculator', async () => {
-      mockFetch.mockReturnValueOnce(jsonResponse({ success: true }));
+    it('offers no label purchases the proxy closes (410) and no PATCH, which the proxy lacks', () => {
+      const carriers = createClient().carriers as unknown as Record<string, Record<string, unknown>>;
 
-      const client = createClient();
-      await client.carriers.fedex.getRates({ shipperPostalCode: '10001' });
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/ApiProxy/api/v3/RateCalculator/postRetrieveFedExRateAndTransitTimesAsync'),
-        expect.objectContaining({ method: 'POST' }),
-      );
+      expect(carriers.usps.createReturnLabel).toBeUndefined();
+      expect(carriers.usps.createInternationalLabel).toBeUndefined();
+      expect(carriers.ups.createLabel).toBeUndefined();
+      expect(carriers.fedex.createShipment).toBeUndefined();
+      expect(carriers.fedex.createReturnShipment).toBeUndefined();
+      expect(carriers.dhl.createShipment).toBeUndefined();
+      expect(carriers.dhl.updatePickup).toBeUndefined();
     });
 
-    it('calls DHL create shipment', async () => {
+    it('keeps the deprecated proxy writes as keyed writes', async () => {
       mockFetch.mockReturnValueOnce(jsonResponse({ success: true }));
 
-      const client = createClient();
-      await client.carriers.dhl.createShipment({ productCode: 'P' });
+      await createClient().carriers.fedex.createPickup({ pickupDate: '2026-11-02' });
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/ApiProxy/api/v2/ShippingLabel/postDhlCreateShipment'),
-        expect.objectContaining({ method: 'POST' }),
-      );
+      const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+      expect(url).toBe('http://localhost:5000/api/ApiProxy/api/v3/CarrierPickup/postFedExCreateCarrierPickupRequest');
+      expect(init.method).toBe('POST');
+      expect(init.headers['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/);
     });
 
     it('calls UPS tracking', async () => {
@@ -422,8 +426,98 @@ describe('FlexOps Client', () => {
         idempotencyKey: 'idem-key-001',
       });
 
-      // Verify the request was made
       expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][1].headers['Idempotency-Key']).toBe('idem-key-001');
+    });
+  });
+
+  describe('write retries', () => {
+    const webhook = { url: 'https://example.com/hook', events: [WebhookEventType.LabelCreated] };
+
+    function retryingClient() {
+      return createClient({ retry: { maxRetries: 2, baseDelay: 1 } });
+    }
+
+    function keyOf(call: number): string | undefined {
+      return mockFetch.mock.calls[call]?.[1]?.headers['Idempotency-Key'];
+    }
+
+    it('sends one generated Idempotency-Key on every attempt of a write', async () => {
+      mockFetch
+        .mockReturnValueOnce(jsonResponse({ message: 'Unavailable' }, 503))
+        .mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-001' } }, 201));
+
+      await retryingClient().webhooks.create(webhook);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(keyOf(0)).toMatch(/^[0-9a-f-]{36}$/);
+      expect(keyOf(1)).toBe(keyOf(0));
+    });
+
+    it('generates a new key for each separate write', async () => {
+      mockFetch
+        .mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-001' } }, 201))
+        .mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-002' } }, 201));
+
+      const client = retryingClient();
+      await client.webhooks.create(webhook);
+      await client.webhooks.create(webhook);
+
+      expect(keyOf(1)).not.toBe(keyOf(0));
+    });
+
+    it('does not retry a write after a 500, which the Gateway does not replay', async () => {
+      mockFetch.mockReturnValue(jsonResponse({ message: 'Internal error' }, 500));
+
+      await expect(retryingClient().webhooks.create(webhook)).rejects.toMatchObject({ status: 500 });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries a timed-out or dropped write with the same key', async () => {
+      mockFetch
+        .mockReturnValueOnce(Promise.reject(new TypeError('fetch failed')))
+        .mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-001' } }, 201));
+
+      await retryingClient().webhooks.create(webhook);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(keyOf(1)).toBe(keyOf(0));
+    });
+
+    it('waits out an in-flight duplicate (409 IDEMPOTENCY_CONFLICT) and gets the replay', async () => {
+      mockFetch
+        .mockReturnValueOnce(jsonResponse({ success: false, errorCode: 'IDEMPOTENCY_CONFLICT' }, 409))
+        .mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-001' } }, 201));
+
+      const result = await retryingClient().webhooks.create(webhook);
+
+      expect(result.data.id).toBe('wh-001');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not retry any other 409', async () => {
+      mockFetch.mockReturnValue(jsonResponse({ success: false, errorCode: 'CONFLICT' }, 409));
+
+      await expect(retryingClient().webhooks.create(webhook)).rejects.toMatchObject({ status: 409 });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not resend a DELETE after a dropped connection or a 503', async () => {
+      mockFetch.mockReturnValueOnce(Promise.reject(new TypeError('fetch failed')));
+      await expect(retryingClient().webhooks.delete('wh-001')).rejects.toThrow('fetch failed');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      mockFetch.mockReset();
+      mockFetch.mockReturnValue(jsonResponse({ message: 'Unavailable' }, 503));
+      await expect(retryingClient().webhooks.delete('wh-001')).rejects.toMatchObject({ status: 503 });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(keyOf(0)).toBeUndefined();
+    });
+
+    it('returns undefined for a 204 instead of the raw response', async () => {
+      mockFetch.mockReturnValueOnce(Promise.resolve(new Response(null, { status: 204 })));
+
+      await expect(retryingClient().webhooks.delete('wh-001')).resolves.toBeUndefined();
     });
   });
 
@@ -456,16 +550,19 @@ describe('FlexOps Client', () => {
   });
 
   describe('orders', () => {
-    it('creates an order', async () => {
-      mockFetch.mockReturnValueOnce(jsonResponse({ success: true }));
+    it('reads orders through the legacy proxy and offers no order writes', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: [] }));
 
       const client = createClient();
-      await client.orders.create({ orderNumber: 'ORD-001' });
+      await client.orders.getNewOrders();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:5000/api/ApiProxy/api/v1/Order/postNewOrder',
-        expect.objectContaining({ method: 'POST' }),
+        'http://localhost:5000/api/ApiProxy/api/v1/Order/getNewOrderList',
+        expect.objectContaining({ method: 'GET' }),
       );
+      const orders = client.orders as unknown as Record<string, unknown>;
+      expect(orders.create).toBeUndefined();
+      expect(orders.cancel).toBeUndefined();
     });
   });
 
@@ -611,15 +708,16 @@ describe('Gateway wire shapes (#6)', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it('wraps validateAddress in the Gateway AddressValidationRequest', async () => {
+  it('sends validateAddress as the documented flat AddressValidationRequest', async () => {
     mockFetch.mockReturnValueOnce(jsonResponse({ isValid: true })).mockReturnValueOnce(jsonResponse({ isValid: true }));
-    const canonical = { addressLine1: '123 Main St', city: 'New York', stateProvince: 'NY', postalCode: '10001', countryCode: 'US' };
+    const canonical = { addressLine1: '123 Main St', city: 'New York', stateProvince: 'NY', postalCode: '10001' };
 
-    await createClient().shipping.validateAddress({ name: 'J', street1: '123 Main St', city: 'New York', state: 'NY', zip: '10001', country: 'US' });
+    await createClient().shipping.validateAddress({ name: 'J', street1: '123 Main St', street2: 'Apt 4', city: 'New York', state: 'NY', zip: '10001', country: 'CA' });
     await createClient().shipping.validateAddress(canonical);
 
-    expect(sentBody(0)).toEqual({ address: { name: 'J', ...canonical } });
-    expect(sentBody(1)).toEqual({ address: canonical });
+    expect(sentBody(0)).toEqual({ name: 'J', line1: '123 Main St', line2: 'Apt 4', city: 'New York', state: 'NY', postalCode: '10001', country: 'CA' });
+    // The Gateway defaults the country to US; the SDK sends it explicitly.
+    expect(sentBody(1)).toEqual({ line1: '123 Main St', city: 'New York', state: 'NY', postalCode: '10001', country: 'US' });
   });
 
   it('sends hazmatClassification only when the caller sets it', async () => {
@@ -664,5 +762,196 @@ describe('international USPS contract', () => {
     await expect(createClient().shipping.getRates({ origin: {}, destination: {}, package: {} } as never))
       .rejects.toMatchObject({ status: 403, code: 'FeatureDisabled' });
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('documented-API alignment (3.0)', () => {
+  beforeEach(() => mockFetch.mockReset());
+  const sentBody = (call = 0) => JSON.parse(mockFetch.mock.calls[call]?.[1]?.body as string);
+  const sent = (call = 0) => mockFetch.mock.calls[call] as [string, RequestInit & { headers: Record<string, string> }];
+  const ok = (data: unknown = {}, status = 200) => mockFetch.mockReturnValueOnce(jsonResponse(data, status));
+
+  it('reads the wallet balance for the configured workspace from my-balance', async () => {
+    ok({ hasWallet: true, balanceCents: 1250, balance: 12.5 });
+
+    const balance = await createClient().wallet.getBalance();
+
+    expect(balance.balanceCents).toBe(1250);
+    expect(sent()[0]).toBe('http://localhost:5000/api/wallet/my-balance');
+    expect(sent()[1].headers['X-Workspace-Id']).toBe('ws-test-001');
+  });
+
+  it('sends member roles as Gateway numbers', async () => {
+    ok().mockReturnValueOnce(jsonResponse({}));
+    const workspaces = createClient().workspaces;
+
+    await workspaces.inviteMember('a@b.c');
+    await workspaces.updateMemberRole('u1', WorkspaceRole.Admin);
+
+    expect(sentBody(0)).toEqual({ email: 'a@b.c', role: 2 });
+    expect(sent(1)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/members/u1/role');
+    expect(sentBody(1)).toEqual({ newRole: 1 });
+  });
+
+  it('creates returns as RMAs and receives inspected items', async () => {
+    ok({}, 201).mockReturnValueOnce(jsonResponse({}));
+    const returns = createClient().returns;
+
+    await returns.create({ orderId: 42, reason: 'Damaged', items: [{ sku: 'S1', quantity: 1 }] });
+    await returns.markReceived('rma-1', {
+      rmaNumber: 'RMA-1', warehouseId: 3, inspectedItems: [{ partNumber: 'S1', quantity: 1, disposition: 0 }],
+    });
+
+    expect(sent(0)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/returns/rma');
+    expect(sentBody(0).orderId).toBe(42);
+    expect(sent(1)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/returns/rma-1/receive');
+    expect(sentBody(1).inspectedItems[0].disposition).toBe(0);
+  });
+
+  it('reorders rules with a POST of rule priorities', async () => {
+    ok();
+
+    await createClient().rules.reorder(['r-a', 'r-b']);
+
+    expect(sent()[1].method).toBe('POST');
+    expect(sentBody()).toEqual({ rules: [{ ruleId: 'r-a', priority: 0 }, { ruleId: 'r-b', priority: 1 }] });
+  });
+
+  it('buys insurance through policies and carbon offsets through purchase, each with a key', async () => {
+    ok({}, 201).mockReturnValueOnce(jsonResponse({}, 201));
+    const client = createClient();
+
+    await client.insurance.purchase({ trackingNumber: '9400', carrierCode: 'usps', declaredValue: 100 });
+    await client.carbonOffsets.purchase({ trackingNumber: '9400', weightLbs: 2, distanceMiles: 300 });
+
+    expect(sent(0)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/insurance/policies');
+    expect(sentBody(0)).toEqual({ trackingNumber: '9400', carrierCode: 'usps', declaredValue: 100 });
+    expect(sent(1)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/carbon-offsets/purchase');
+    expect(sent(0)[1].headers['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/);
+    expect(sent(1)[1].headers['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('looks up HS codes without a workspace in the path', async () => {
+    ok([]);
+
+    await createClient().hsCodes.search('shoes', { destinationCountry: 'CA' });
+
+    expect(sent()[0]).toBe('http://localhost:5000/api/shipping/hs-codes/search?query=shoes&destinationCountry=CA');
+  });
+
+  it('schedules pickups with the Gateway address fields and lists scheduled pickups', async () => {
+    ok().mockReturnValueOnce(jsonResponse({ success: true, data: [] }));
+    const pickups = createClient().pickups;
+    const request = {
+      carrierCode: 'usps', pickupDate: '2026-10-20', street: '1 Main St', city: 'New York', state: 'NY',
+      postalCode: '10001', packageCount: 2, totalWeightOz: 32,
+    };
+
+    await pickups.schedule(request);
+    await pickups.list();
+
+    expect(sentBody(0)).toEqual(request);
+    expect(sent(1)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/pickups/scheduled');
+  });
+
+  it('uses the login token (data.token) as the bearer for later requests', async () => {
+    ok({ success: true, data: { token: 'jwt-1', refreshToken: 'r-1', requiresTwoFactor: false } });
+    ok({ success: true, data: [] });
+    const client = createClient({ apiKey: undefined });
+
+    await client.auth.login({ email: 'a@b.c', password: 'x' });
+    await client.workspaces.list();
+
+    expect(sent(1)[1].headers['Authorization']).toBe('Bearer jwt-1');
+  });
+
+  it('refreshes with the documented {token, refreshToken} body and switches to the new token', async () => {
+    ok({ success: true, data: { token: 'jwt-2', refreshToken: 'r-2' } });
+    ok({ success: true, data: [] });
+    const client = createClient({ apiKey: undefined, accessToken: 'jwt-expired' });
+
+    await client.auth.refreshToken('r-1');
+    await client.workspaces.list();
+
+    expect(sent(0)[0]).toBe('http://localhost:5000/api/Account/refresh-token');
+    expect(sentBody(0)).toEqual({ token: 'jwt-expired', refreshToken: 'r-1' });
+    expect(sent(1)[1].headers['Authorization']).toBe('Bearer jwt-2');
+  });
+
+  it('refuses to refresh without an access token and sends nothing', async () => {
+    const client = createClient({ apiKey: undefined });
+
+    await expect(client.auth.refreshToken('r-1')).rejects.toBeInstanceOf(FlexOpsAuthError);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('restores recurring shipments on the documented routes with bare responses', async () => {
+    ok({ id: 'r-1', name: 'Weekly', interval: 1 }, 201);
+    mockFetch.mockReturnValueOnce(Promise.resolve(new Response(null, { status: 204 })));
+    const recurring = createClient().recurringShipments;
+
+    const created = await recurring.create({ name: 'Weekly', interval: RecurrenceInterval.Weekly, firstRunUtc: '2026-11-01T15:00:00Z', addressId: 'a-1' });
+    const triggered = await recurring.trigger('r-1', 'caller-key');
+
+    expect(created.name).toBe('Weekly');
+    expect(sent(0)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/recurring-shipments');
+    expect(sentBody(0)).toEqual({ name: 'Weekly', interval: 1, firstRunUtc: '2026-11-01T15:00:00Z', addressId: 'a-1' });
+    expect(triggered).toBeUndefined();
+    expect(sent(1)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/recurring-shipments/r-1/trigger');
+    expect(sent(1)[1].method).toBe('POST');
+    expect(sent(1)[1].headers['Idempotency-Key']).toBe('caller-key');
+  });
+
+  it('restores report schedules with enveloped responses and numeric enums', async () => {
+    ok({ success: true, data: { id: 's-1', format: 0 } }, 201);
+    ok({ success: true, data: null, message: 'Report schedule toggled' });
+    const schedules = createClient().reportSchedules;
+
+    const created = await schedules.create({
+      reportType: 'shipments', format: ReportFormat.Csv, frequencyType: ReportFrequency.Weekly, dayOfWeek: 1,
+      timeOfDayUtc: '08:00:00', recipientEmails: 'ops@example.com',
+    });
+    await schedules.toggle('s-1');
+
+    expect(created.data?.id).toBe('s-1');
+    expect(sent(0)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/report-schedules');
+    expect(sentBody(0)).toMatchObject({ format: 0, frequencyType: 1, dayOfWeek: 1, timeOfDayUtc: '08:00:00' });
+    expect(sent(1)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/report-schedules/s-1/toggle');
+  });
+
+  it('restores email templates as an upsert by event and a stateless preview', async () => {
+    ok({ id: 't-1', eventType: 3, subjectTemplate: 's' });
+    ok({ renderedSubject: 'S', renderedHtmlBody: 'B' });
+    const templates = createClient().emailTemplates;
+
+    const saved = await templates.upsert({ eventType: TrackingEmailEvent.Delivered, subjectTemplate: 's', htmlBodyTemplate: 'b' });
+    const preview = await templates.preview({ subjectTemplate: 's', htmlBodyTemplate: 'b' });
+
+    expect(saved.eventType).toBe(3);
+    expect(sent(0)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/email-templates');
+    expect(sent(0)[1].method).toBe('PUT');
+    expect(sentBody(0)).toEqual({ eventType: 3, subjectTemplate: 's', htmlBodyTemplate: 'b' });
+    expect(preview.renderedSubject).toBe('S');
+    expect(sent(1)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/email-templates/preview');
+  });
+
+  it('sends a write answered 422 IDEMPOTENCY_KEY_REUSED once and surfaces the code', async () => {
+    ok({ success: false, errorCode: 'IDEMPOTENCY_KEY_REUSED', message: 'This Idempotency-Key was already used for a different request.' }, 422);
+
+    const error = await createClient().carbonOffsets.purchase({ trackingNumber: '9400', weightLbs: 1, distanceMiles: 10 }).catch(e => e);
+
+    expect(error).toBeInstanceOf(FlexOpsError);
+    expect(error).toMatchObject({ status: 422, code: 'IDEMPOTENCY_KEY_REUSED' });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('filters the returns list by the date range the Gateway accepts', async () => {
+    ok({ success: true, data: [] });
+
+    await createClient().returns.list({ startDate: '2026-10-01', endDate: '2026-10-19', page: 2, pageSize: 50 });
+
+    expect(sent()[0]).toBe(
+      'http://localhost:5000/api/workspaces/ws-test-001/returns?startDate=2026-10-01&endDate=2026-10-19&page=2&pageSize=50',
+    );
   });
 });

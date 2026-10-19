@@ -34,7 +34,12 @@ export interface RetryConfig {
   maxRetries?: number;
   /** Base delay in ms for exponential backoff. Default: 1000 */
   baseDelay?: number;
-  /** HTTP status codes to retry on. Default: [429, 500, 502, 503, 504] */
+  /**
+   * HTTP status codes to retry on. Default: [429, 500, 502, 503, 504]. GETs use the whole list.
+   * POST, PUT and PATCH always send an `Idempotency-Key` (yours, or one generated per call and
+   * reused on every retry) and retry only on 429, 502, 503, 504, a dropped or timed-out request,
+   * and a 409 `IDEMPOTENCY_CONFLICT`; never on 500. DELETE retries only on 429.
+   */
   retryableStatusCodes?: number[];
 }
 
@@ -67,47 +72,97 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
+  /** The JWT access token. Absent while `requiresTwoFactor` is true. */
+  token?: string;
+  refreshToken?: string;
   expiresAt: string;
   userId: string;
-}
-
-export interface RegisterRequest {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
-  companyName?: string;
+  roles: string[];
+  customerId?: number;
+  requiresTwoFactor: boolean;
+  twoFactorToken?: string;
+  twoFactorMethod?: string;
+  requiresTermsAcceptance: boolean;
 }
 
 // ---------------------------------------------------------------------------
 // Workspaces
 // ---------------------------------------------------------------------------
 
+/** A workspace member's role, sent and returned as a number. */
+export const WorkspaceRole = {
+  Owner: 0,
+  Admin: 1,
+  Member: 2,
+  Merchant: 3,
+} as const;
+export type WorkspaceRole = (typeof WorkspaceRole)[keyof typeof WorkspaceRole];
+
+/** An entry of `GET /api/workspaces`: a workspace the caller belongs to. */
 export interface Workspace {
   id: string;
   name: string;
   slug: string;
+  myRole: WorkspaceRole;
   planId: string;
-  ownerId: string;
-  isActive: boolean;
-  monthlyLabelLimit: number;
-  labelsUsedThisMonth: number;
-  userLimit: number;
-  createdAt: string;
+  memberCount: number;
+  isCreator: boolean;
+  productType?: string | null;
+  entitlements: unknown[];
 }
 
-export interface CreateWorkspaceRequest {
+/** `GET /api/workspaces/{id}`. */
+export interface WorkspaceDetail {
+  id: string;
   name: string;
-  planId?: string;
+  slug: string;
+  domain?: string | null;
+  planId: string;
+  status: number;
+  subscriptionStatus: string;
+  userLimit: number;
+  currentUserCount: number;
+  monthlyLabelLimit: number;
+  labelsUsedThisMonth: number;
+  isTrialing: boolean;
+  trialExpiresAt?: string | null;
+  myRole: WorkspaceRole;
+  canManageMembers: boolean;
+  canManageBilling: boolean;
+  createdAt: string;
+  entitlements: unknown[];
 }
 
 export interface WorkspaceMember {
+  membershipId: string;
   userId: string;
   email: string;
-  role: 'Owner' | 'Admin' | 'Member' | 'Guest';
+  name?: string | null;
+  role: WorkspaceRole;
+  status: number;
   joinedAt: string;
+  isCreator: boolean;
+  isDeactivated: boolean;
+}
+
+export interface PendingInvite {
+  inviteId: string;
+  email: string;
+  role: WorkspaceRole;
+  expiresAt: string;
+  invitedByName: string;
+}
+
+/** `GET /api/workspaces/{id}/members`. */
+export interface WorkspaceMemberList {
+  members: WorkspaceMember[];
+  pendingInvites: PendingInvite[];
+  userLimit: number;
+  activeCount: number;
+  canInviteMore: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -328,10 +383,25 @@ export interface TrackingEvent {
 // Shipping — Address Validation
 // ---------------------------------------------------------------------------
 
+/** `POST /api/addresses/validate`. */
 export interface AddressValidationResult {
   isValid: boolean;
-  correctedAddress?: Address;
-  messages?: string[];
+  suggestedAddress?: SuggestedAddress | null;
+  isResidential?: boolean | null;
+  warnings: string[];
+  validatedBy?: string | null;
+  /** True when the validation service could not complete the check; `isValid` is then not a verdict. */
+  validationUnavailable: boolean;
+  checkedAt?: string | null;
+}
+
+export interface SuggestedAddress {
+  line1: string;
+  line2?: string | null;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -425,42 +495,94 @@ export interface UpdateWebhookRequest {
 // Wallet / Billing
 // ---------------------------------------------------------------------------
 
+/** `GET /api/wallet/my-balance` for the configured workspace. */
 export interface WalletBalance {
+  hasWallet: boolean;
+  balanceCents: number;
   balance: number;
-  currency: string;
-  autoReloadEnabled: boolean;
-  autoReloadThreshold?: number;
-  autoReloadAmount?: number;
 }
 
 // ---------------------------------------------------------------------------
 // Insurance
 // ---------------------------------------------------------------------------
 
+export interface InsuranceQuoteRequest {
+  declaredValue: number;
+  carrierCode: string;
+  trackingNumber?: string;
+  provider?: string;
+}
+
 export interface InsuranceQuote {
-  provider: string;
+  declaredValue: number;
+  coverageAmount: number;
   premium: number;
-  coverage: number;
-  currency: string;
+  coverageTier: string;
+  carrierCode: string;
+  coverageDays: number;
+  provider: string;
+}
+
+export interface PurchaseInsuranceRequest {
+  trackingNumber: string;
+  carrierCode: string;
+  declaredValue: number;
+  coverageTier?: string;
+  provider?: string;
 }
 
 export interface InsurancePolicy {
   policyId: string;
-  provider: string;
   trackingNumber: string;
-  coverage: number;
+  carrierCode: string;
+  declaredValue: number;
+  coverageAmount: number;
   premium: number;
   status: string;
+  coverageTier?: string | null;
+  purchasedAt: string;
+  expiresAt: string;
+  cancelledAt?: string | null;
+  provider?: string | null;
+  providerReference?: string | null;
+  isSandbox: boolean;
+}
+
+export interface FileClaimRequest {
+  policyId: string;
+  claimReason: string;
+  claimAmount: number;
+  /** Optional evidence (photo URLs, notes) as a JSON string. */
+  evidenceJson?: string;
+}
+
+export interface InsuranceClaim {
+  claimId: string;
+  policyId: string;
+  claimReason: string;
+  claimAmount: number;
+  status: string;
+  submittedAt: string;
+  resolvedAt?: string | null;
+  approvedAmount?: number | null;
+  resolutionNotes?: string | null;
+  isSandbox: boolean;
 }
 
 // ---------------------------------------------------------------------------
 // Returns / RMA
 // ---------------------------------------------------------------------------
 
+/** Body of `POST /api/workspaces/{workspaceId}/returns/rma`. */
 export interface ReturnRequest {
-  orderId: string;
+  /** The order's numeric id. */
+  orderId: number;
+  orderNumber?: string;
   reason: string;
   items: ReturnItem[];
+  notes?: string;
+  customerEmail?: string;
+  reasonId?: number;
 }
 
 export interface ReturnItem {
@@ -497,6 +619,24 @@ export interface ReturnLabelRequest {
    * Return labels cannot carry HAZMAT yet, so any other class is refused (400 `HazmatNotSupported`).
    */
   hazmatClassification?: HazmatClassification;
+  /** USPS rate indicator for the return label's price tier. */
+  rateIndicator?: string;
+}
+
+/** How a received item is dispositioned: 0 restock, 1 refurbish, 2 dispose. */
+export type ReturnDisposition = 0 | 1 | 2;
+
+/** Body of `POST /api/workspaces/{workspaceId}/returns/{rmaId}/receive`. */
+export interface ReceiveReturnRequest {
+  rmaNumber: string;
+  warehouseId: number;
+  inspectedItems: {
+    partNumber: string;
+    partDescription?: string;
+    quantity: number;
+    disposition: ReturnDisposition;
+    inspectionNotes?: string;
+  }[];
 }
 
 export interface ReturnAuthorization {
@@ -504,33 +644,6 @@ export interface ReturnAuthorization {
   status: string;
   returnLabel?: Label;
   createdAt: string;
-}
-
-// ---------------------------------------------------------------------------
-// API Keys
-// ---------------------------------------------------------------------------
-
-export interface ApiKeyInfo {
-  id: string;
-  name: string;
-  prefix: string;
-  scopes: string[];
-  lastUsedAt?: string;
-  expiresAt?: string;
-  createdAt: string;
-}
-
-export interface CreateApiKeyRequest {
-  name: string;
-  scopes?: string[];
-  expiresInDays?: number;
-}
-
-export interface CreateApiKeyResponse {
-  id: string;
-  key: string;
-  name: string;
-  prefix: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -551,35 +664,27 @@ export interface CarrierSummary {
 }
 
 // ---------------------------------------------------------------------------
-// Carrier-Specific Types (VisionSuite passthrough)
-// ---------------------------------------------------------------------------
-
-export interface UspsLabelRequest {
-  /** Full USPS label creation payload — passed through to VisionSuite */
-  [key: string]: unknown;
-}
-
-export interface UpsLabelRequest {
-  [key: string]: unknown;
-}
-
-export interface FedExShipmentRequest {
-  [key: string]: unknown;
-}
-
-export interface DhlShipmentRequest {
-  [key: string]: unknown;
-}
-
-// ---------------------------------------------------------------------------
 // Automation Rules
 // ---------------------------------------------------------------------------
 
 export interface ShippingRule {
   id: string;
   name: string;
-  isActive: boolean;
   priority: number;
+  isEnabled: boolean;
+  warehouseId?: string | null;
+  conditions: RuleCondition[];
+  actions: RuleAction[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Body of a rule create or update. */
+export interface ShippingRuleInput {
+  name: string;
+  priority: number;
+  isEnabled: boolean;
+  warehouseId?: string;
   conditions: RuleCondition[];
   actions: RuleAction[];
 }
@@ -596,25 +701,59 @@ export interface RuleAction {
   value: string;
 }
 
+/** A sample shipment for `rules.test`. */
+export interface ShippingRuleTestRequest {
+  weightOz: number;
+  declaredValue: number;
+  destinationCountry: string;
+  destinationState?: string;
+  destinationPostalCode?: string;
+  orderSource?: string;
+  itemCount: number;
+  shipMethod?: string;
+  destinationZone?: string;
+  tags?: string[];
+}
+
 // ---------------------------------------------------------------------------
 // Pickups
 // ---------------------------------------------------------------------------
 
+/** Body of `POST /api/workspaces/{workspaceId}/pickups`. Dates are ISO 8601. */
 export interface PickupRequest {
-  carrier: string;
+  carrierCode: string;
   pickupDate: string;
-  readyTime: string;
-  closeTime: string;
-  address: Address;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country?: string;
   packageCount: number;
-  totalWeight: number;
+  totalWeightOz?: number;
+  specialInstructions?: string;
+  readyTime?: string;
+  closeTime?: string;
+  contactName?: string;
+  contactPhone?: string;
 }
 
 export interface PickupConfirmation {
-  confirmationNumber: string;
-  carrier: string;
+  pickupId?: string | null;
+  carrierCode: string;
   pickupDate: string;
   status: string;
+  confirmationNumber?: string | null;
+  windowStart?: string | null;
+  windowEnd?: string | null;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  packageCount: number;
+  createdAt?: string | null;
+  message?: string | null;
+  success: boolean;
+  errorMessage?: string | null;
+  isSandbox: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -706,22 +845,197 @@ export interface LaneSavingsOpportunity {
 // Carbon Offsets
 // ---------------------------------------------------------------------------
 
-export interface OffsetResult {
-  labelId: string;
-  offsetId: string;
-  kgCo2e: number;
-  cost: { amount: number; currency: string };
-  provider: string;
-  certificateUrl: string;
+export interface CarbonOffsetQuoteRequest {
+  weightLbs: number;
+  distanceMiles: number;
 }
 
-export interface EmissionsEstimate {
-  labelId: string;
-  kgCo2e: number;
-  carrier: string;
-  service: string;
-  distanceMiles: number;
-  model: string;
+export interface CarbonOffsetQuote {
+  carbonKg: number;
+  costUsd: number;
+  equivalentTreesPlanted: number;
+  provider: string;
+}
+
+export interface CarbonOffsetPurchaseRequest extends CarbonOffsetQuoteRequest {
+  trackingNumber: string;
+}
+
+export interface CarbonOffset {
+  offsetId: string;
+  trackingNumber: string;
+  carbonKg: number;
+  costUsd: number;
+  status: string;
+  provider: string;
+  providerReference?: string | null;
+  isAutoOffset: boolean;
+  purchasedAt: string;
+}
+
+export interface CarbonOffsetSummary {
+  totalCarbonKg: number;
+  totalCostUsd: number;
+  totalOffsets: number;
+  equivalentTreesPlanted: number;
+}
+
+export interface CarbonOffsetSettings {
+  autoOffsetEnabled: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Recurring Shipments, Report Schedules, Email Templates
+// ---------------------------------------------------------------------------
+
+/** How often a recurring shipment runs, sent as a number. `Custom` uses `cronExpression`. */
+export const RecurrenceInterval = {
+  Daily: 0,
+  Weekly: 1,
+  Biweekly: 2,
+  Monthly: 3,
+  Custom: 4,
+} as const;
+export type RecurrenceInterval = (typeof RecurrenceInterval)[keyof typeof RecurrenceInterval];
+
+export interface RecurringShipment {
+  id: string;
+  workspaceId: string;
+  presetId?: string | null;
+  presetName?: string | null;
+  addressId?: string | null;
+  addressSummary?: string | null;
+  name: string;
+  interval: RecurrenceInterval;
+  intervalName: string;
+  cronExpression?: string | null;
+  nextRunUtc: string;
+  lastRunUtc?: string | null;
+  isActive: boolean;
+  failureCount: number;
+  maxFailures: number;
+  lastError?: string | null;
+  createdAt: string;
+}
+
+export interface CreateRecurringShipmentRequest {
+  /** Up to 200 characters. */
+  name: string;
+  /** Shipping preset that supplies the package and service. */
+  presetId?: string;
+  /** Destination address; a run without one fails. */
+  addressId?: string;
+  interval: RecurrenceInterval;
+  /** Up to 100 characters; used with `RecurrenceInterval.Custom`. */
+  cronExpression?: string;
+  /** ISO 8601 date-time of the first run. */
+  firstRunUtc: string;
+  /** Failed runs (1-100, default 3) before the schedule is paused. */
+  maxFailures?: number;
+}
+
+export type UpdateRecurringShipmentRequest = Partial<Omit<CreateRecurringShipmentRequest, 'firstRunUtc'>>;
+
+/** Report file format, sent as a number. */
+export const ReportFormat = {
+  Csv: 0,
+  Json: 1,
+} as const;
+export type ReportFormat = (typeof ReportFormat)[keyof typeof ReportFormat];
+
+/** How often a report is emailed, sent as a number. */
+export const ReportFrequency = {
+  Daily: 0,
+  Weekly: 1,
+  Monthly: 2,
+} as const;
+export type ReportFrequency = (typeof ReportFrequency)[keyof typeof ReportFrequency];
+
+export interface ReportSchedule {
+  id: string;
+  workspaceId: string;
+  reportType: string;
+  format: ReportFormat;
+  filterParametersJson?: string | null;
+  frequencyType: ReportFrequency;
+  frequencyName: string;
+  /** 0 (Sunday) to 6, for weekly schedules. */
+  dayOfWeek?: number | null;
+  /** 1 to 28, for monthly schedules. */
+  dayOfMonth?: number | null;
+  /** UTC time of day, `"HH:mm:ss"`. */
+  timeOfDayUtc: string;
+  nextRunUtc: string;
+  lastRunUtc?: string | null;
+  isEnabled: boolean;
+  /** Comma-separated recipient addresses. */
+  recipientEmails: string;
+  failureCount: number;
+  maxFailures: number;
+  lastError?: string | null;
+  createdAt: string;
+}
+
+export interface CreateReportScheduleRequest {
+  /** Report name, up to 50 characters, for example `"shipments"`. */
+  reportType: string;
+  format: ReportFormat;
+  filterParametersJson?: string;
+  frequencyType: ReportFrequency;
+  /** 0 (Sunday) to 6, for weekly schedules. */
+  dayOfWeek?: number;
+  /** 1 to 28, for monthly schedules. */
+  dayOfMonth?: number;
+  /** UTC time of day, `"HH:mm:ss"`. */
+  timeOfDayUtc: string;
+  /** Comma-separated recipient addresses, up to 2000 characters. */
+  recipientEmails: string;
+  /** Failed runs (1-100, default 3) before the schedule is disabled. */
+  maxFailures?: number;
+}
+
+export type UpdateReportScheduleRequest = Partial<CreateReportScheduleRequest>;
+
+/** The tracking event an email template is sent for, sent as a number. */
+export const TrackingEmailEvent = {
+  LabelCreated: 0,
+  InTransit: 1,
+  OutForDelivery: 2,
+  Delivered: 3,
+  Exception: 4,
+  ReturnToSender: 5,
+} as const;
+export type TrackingEmailEvent = (typeof TrackingEmailEvent)[keyof typeof TrackingEmailEvent];
+
+export interface EmailTemplate {
+  id: string;
+  workspaceId: string;
+  eventType: TrackingEmailEvent;
+  eventTypeName: string;
+  subjectTemplate: string;
+  htmlBodyTemplate: string;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertEmailTemplateRequest {
+  eventType: TrackingEmailEvent;
+  /** Up to 500 characters. */
+  subjectTemplate: string;
+  htmlBodyTemplate: string;
+  /** Default true. */
+  isEnabled?: boolean;
+}
+
+export interface EmailTemplatePreviewRequest {
+  subjectTemplate: string;
+  htmlBodyTemplate: string;
+}
+
+export interface EmailTemplatePreview {
+  renderedSubject: string;
+  renderedHtmlBody: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -778,93 +1092,6 @@ export interface LandedCostEstimate {
   dutyRateApplied: string | null;
   isEstimate: boolean;
   disclaimer: string | null;
-}
-
-// ---------------------------------------------------------------------------
-// Recurring Shipments
-// ---------------------------------------------------------------------------
-
-export interface RecurringShipment {
-  id: string;
-  name: string;
-  isActive: boolean;
-  scheduleExpression: string;
-  nextRunAt: string | null;
-  lastRunAt: string | null;
-  createdAt: string;
-}
-
-export interface CreateRecurringShipmentRequest {
-  name: string;
-  scheduleExpression: string;
-  labelRequest: CreateLabelRequest;
-}
-
-export interface UpdateRecurringShipmentRequest {
-  name?: string;
-  scheduleExpression?: string;
-  labelRequest?: Partial<CreateLabelRequest>;
-}
-
-// ---------------------------------------------------------------------------
-// Email Templates
-// ---------------------------------------------------------------------------
-
-export interface EmailTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  triggerEvent: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateEmailTemplateRequest {
-  name: string;
-  subject: string;
-  bodyHtml: string;
-  triggerEvent: string;
-  isActive?: boolean;
-}
-
-export interface UpdateEmailTemplateRequest {
-  name?: string;
-  subject?: string;
-  bodyHtml?: string;
-  triggerEvent?: string;
-  isActive?: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// Scheduled Reports
-// ---------------------------------------------------------------------------
-
-export interface ReportSchedule {
-  id: string;
-  name: string;
-  reportType: string;
-  recipientEmail: string;
-  scheduleExpression: string;
-  isActive: boolean;
-  lastSentAt: string | null;
-  createdAt: string;
-}
-
-export interface CreateReportScheduleRequest {
-  name: string;
-  reportType: string;
-  recipientEmail: string;
-  scheduleExpression: string;
-  isActive?: boolean;
-}
-
-export interface UpdateReportScheduleRequest {
-  name?: string;
-  reportType?: string;
-  recipientEmail?: string;
-  scheduleExpression?: string;
-  isActive?: boolean;
 }
 
 // ---------------------------------------------------------------------------

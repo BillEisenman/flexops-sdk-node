@@ -17,10 +17,11 @@ export type {
   PaginatedResponse,
   LoginRequest,
   LoginResponse,
-  RegisterRequest,
   Workspace,
-  CreateWorkspaceRequest,
+  WorkspaceDetail,
   WorkspaceMember,
+  WorkspaceMemberList,
+  PendingInvite,
   RateRequest,
   CanonicalRateRequest,
   LegacyRateRequest,
@@ -37,6 +38,7 @@ export type {
   TrackingInfo,
   TrackingEvent,
   AddressValidationResult,
+  SuggestedAddress,
   BatchLabelRequest,
   BatchLabelJob,
   Order,
@@ -45,18 +47,23 @@ export type {
   CreateWebhookRequest,
   UpdateWebhookRequest,
   WalletBalance,
+  InsuranceQuoteRequest,
   InsuranceQuote,
+  PurchaseInsuranceRequest,
   InsurancePolicy,
+  FileClaimRequest,
+  InsuranceClaim,
   ReturnRequest,
   ReturnItem,
   ReturnLabelRequest,
   ReturnAuthorization,
-  ApiKeyInfo,
-  CreateApiKeyRequest,
-  CreateApiKeyResponse,
+  ReceiveReturnRequest,
+  ReturnDisposition,
   ShipmentsTrend,
   CarrierSummary,
   ShippingRule,
+  ShippingRuleInput,
+  ShippingRuleTestRequest,
   RuleCondition,
   RuleAction,
   PickupRequest,
@@ -70,25 +77,38 @@ export type {
   DeliveryPredictionResponse,
   CostSavingsSummary,
   LaneSavingsOpportunity,
-  OffsetResult,
-  EmissionsEstimate,
+  CarbonOffsetQuoteRequest,
+  CarbonOffsetQuote,
+  CarbonOffsetPurchaseRequest,
+  CarbonOffset,
+  CarbonOffsetSummary,
+  CarbonOffsetSettings,
+  RecurringShipment,
+  CreateRecurringShipmentRequest,
+  UpdateRecurringShipmentRequest,
+  ReportSchedule,
+  CreateReportScheduleRequest,
+  UpdateReportScheduleRequest,
+  EmailTemplate,
+  UpsertEmailTemplateRequest,
+  EmailTemplatePreviewRequest,
+  EmailTemplatePreview,
   HsCodeResult,
   LandedCostRequest,
   CustomsItem,
   LandedCostEstimate,
-  RecurringShipment,
-  CreateRecurringShipmentRequest,
-  UpdateRecurringShipmentRequest,
-  EmailTemplate,
-  CreateEmailTemplateRequest,
-  UpdateEmailTemplateRequest,
-  ReportSchedule,
-  CreateReportScheduleRequest,
-  UpdateReportScheduleRequest,
 } from './types.js';
 
 // Values
-export { HazmatClassification, WebhookEventType } from './types.js';
+export {
+  HazmatClassification,
+  WebhookEventType,
+  WorkspaceRole,
+  RecurrenceInterval,
+  ReportFormat,
+  ReportFrequency,
+  TrackingEmailEvent,
+} from './types.js';
 
 // Errors
 export {
@@ -106,15 +126,14 @@ export { WebhooksResource, type VerifySignatureOptions } from './resources/webho
 export { WalletResource } from './resources/wallet.js';
 export { InsuranceResource } from './resources/insurance.js';
 export { ReturnsResource } from './resources/returns.js';
-export { ApiKeysResource } from './resources/api-keys.js';
 export { AnalyticsResource } from './resources/analytics.js';
 export { OrdersResource } from './resources/orders.js';
 export { InventoryResource } from './resources/inventory.js';
 export { PickupsResource } from './resources/pickups.js';
 export { ScanFormsResource } from './resources/scan-forms.js';
 export { RulesResource } from './resources/rules.js';
-export { OffsetResource } from './resources/offsets.js';
-export { HsCodesResource } from './resources/hs-codes.js';
+export { CarbonOffsetsResource } from './resources/carbon-offsets.js';
 export { RecurringShipmentsResource } from './resources/recurring-shipments.js';
+export { ReportSchedulesResource } from './resources/report-schedules.js';
 export { EmailTemplatesResource } from './resources/email-templates.js';
-export { ReportsResource } from './resources/reports.js';
+export { HsCodesResource } from './resources/hs-codes.js';
