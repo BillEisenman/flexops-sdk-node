@@ -75,6 +75,9 @@ The changes made since 2.0.0 and listed further down also ship in this release.
 
 ### Added
 - `client.carbonOffsets`: `quote`, `purchase`, `list`, `get`, `getSummary`, `getSettings`, `updateSettings`.
+- `insurance.purchase(request, idempotencyKey?)` and `carbonOffsets.purchase(request, idempotencyKey?)` accept your own
+  `Idempotency-Key`. Store it with the purchase and reuse it when your app retries, so the Gateway returns the first
+  result instead of charging again.
 - `rules.test()` dry-runs the rules against a sample shipment; `webhooks.test()` sends a test delivery.
 
 ### Since 2.0.0 (also in 3.0.0)

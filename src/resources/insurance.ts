@@ -42,9 +42,16 @@ export class InsuranceResource {
   /**
    * Purchase insurance for a shipment. The premium is charged to the workspace wallet. A shipment
    * that already has a policy in force is refused with 409 `ALREADY_EXISTS`.
+   *
+   * Pass an `idempotencyKey` you store with the purchase to make your own retry safe: after an error or
+   * a timeout, retry with the same key and the Gateway returns the first result instead of buying again.
+   * Without one, the SDK's own retries still share a key, but a new call gets a new key.
    */
-  async purchase(request: PurchaseInsuranceRequest): Promise<ApiResponse<InsurancePolicy>> {
-    return this.http.post(this.wsPath('policies'), request);
+  async purchase(request: PurchaseInsuranceRequest, idempotencyKey?: string): Promise<ApiResponse<InsurancePolicy>> {
+    return this.http.request('POST', this.wsPath('policies'), {
+      body: request,
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+    });
   }
 
   /** Void (cancel) an insurance policy. */

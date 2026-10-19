@@ -38,9 +38,16 @@ export class CarbonOffsetsResource {
   /**
    * Buy an offset for a shipment. The cost is charged to the workspace wallet and refunded if the
    * offset provider fails.
+   *
+   * Pass an `idempotencyKey` you store with the purchase to make your own retry safe: after an error or
+   * a timeout, retry with the same key and the Gateway returns the first result instead of buying again.
+   * Without one, the SDK's own retries still share a key, but a new call gets a new key.
    */
-  async purchase(request: CarbonOffsetPurchaseRequest): Promise<ApiResponse<CarbonOffset>> {
-    return this.http.post(this.wsPath('purchase'), request);
+  async purchase(request: CarbonOffsetPurchaseRequest, idempotencyKey?: string): Promise<ApiResponse<CarbonOffset>> {
+    return this.http.request('POST', this.wsPath('purchase'), {
+      body: request,
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+    });
   }
 
   /** List the workspace's offsets, newest first. */

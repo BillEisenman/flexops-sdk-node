@@ -454,6 +454,21 @@ describe('FlexOps Client', () => {
       expect(keyOf(1)).toBe(keyOf(0));
     });
 
+    it("sends the caller's purchase key on every attempt, so the app's own retry is safe too", async () => {
+      mockFetch
+        .mockReturnValueOnce(jsonResponse({ message: 'Unavailable' }, 503))
+        .mockReturnValueOnce(jsonResponse({ id: 'pol-1' }, 201))
+        .mockReturnValueOnce(jsonResponse({ id: 'off-1' }, 201))
+        .mockReturnValueOnce(jsonResponse({ id: 'off-1' }, 201));
+      const client = retryingClient();
+
+      await client.insurance.purchase({ trackingNumber: '9400', carrierCode: 'usps', declaredValue: 100 }, 'order-42-insurance');
+      await client.carbonOffsets.purchase({ trackingNumber: '9400', weightLbs: 2, distanceMiles: 300 }, 'order-42-offset');
+      await client.carbonOffsets.purchase({ trackingNumber: '9400', weightLbs: 2, distanceMiles: 300 }, 'order-42-offset');
+
+      expect([0, 1, 2, 3].map(keyOf)).toEqual(['order-42-insurance', 'order-42-insurance', 'order-42-offset', 'order-42-offset']);
+    });
+
     it('generates a new key for each separate write', async () => {
       mockFetch
         .mockReturnValueOnce(jsonResponse({ success: true, data: { id: 'wh-001' } }, 201))

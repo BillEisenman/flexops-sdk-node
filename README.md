@@ -470,7 +470,9 @@ exponential backoff (`retry.maxRetries`, default 3). Retries are safe for purcha
 
 - Every `POST`, `PUT` and `PATCH` sends an `Idempotency-Key`: yours if you pass one, otherwise one
   generated per call and reused on every retry of that call. The Gateway answers a repeated key with
-  the first result instead of running the request again.
+  the first result instead of running the request again. Pass your own key to purchases
+  (`insurance.purchase(request, key)`, `carbonOffsets.purchase(request, key)`) and store it, so a retry
+  your app makes after an error or a timeout reuses it and cannot buy twice.
 - A write is never retried after a `500`, whose result the Gateway does not replay. A `409
   IDEMPOTENCY_CONFLICT` (the first attempt is still running) is retried. A key reused with a different
   request gets `422 IDEMPOTENCY_KEY_REUSED`, which is not retried: use a new key for a new request.
