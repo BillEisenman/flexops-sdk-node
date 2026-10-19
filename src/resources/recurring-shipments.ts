@@ -8,71 +8,73 @@
 
 import type { HttpClient } from '../http.js';
 import type {
-  ApiResponse,
-  RecurringShipment,
   CreateRecurringShipmentRequest,
+  RecurringShipment,
   UpdateRecurringShipmentRequest,
 } from '../types.js';
 
+/**
+ * Recurring shipments: a saved destination address and shipping preset that create an order on a
+ * schedule. Requires the Pro plan or above.
+ *
+ * Reads work with any API key. Writes need a user token (`auth.login`) or an API key granted
+ * `recurring-shipments:write`; any other key gets 403 `API_KEY_SCOPE_REQUIRED`. Responses are the
+ * bare objects, not the `{ success, data }` envelope.
+ */
 export class RecurringShipmentsResource {
   constructor(
     private readonly http: HttpClient,
     private readonly getWorkspaceId: () => string | undefined,
   ) {}
 
-  private wsPath(suffix: string): string {
+  private wsPath(suffix = ''): string {
     const id = this.getWorkspaceId();
     if (!id) throw new Error('workspaceId is required.');
-    return `/api/workspaces/${id}/recurring-shipments/${suffix}`;
+    return `/api/workspaces/${id}/recurring-shipments${suffix ? `/${suffix}` : ''}`;
   }
 
-  /** List all recurring shipment schedules. */
-  async list(query?: {
-    page?: number;
-    pageSize?: number;
-    isActive?: boolean;
-  }): Promise<ApiResponse<RecurringShipment[]>> {
-    return this.http.get(
-      this.wsPath(''),
-      query,
-    );
+  /** List the workspace's recurring shipments. */
+  async list(): Promise<RecurringShipment[]> {
+    return this.http.get(this.wsPath());
   }
 
-  /** Get a recurring shipment schedule by ID. */
-  async get(id: string): Promise<ApiResponse<RecurringShipment>> {
+  /** Get one recurring shipment. */
+  async get(id: string): Promise<RecurringShipment> {
     return this.http.get(this.wsPath(id));
   }
 
-  /** Create a recurring shipment schedule. */
-  async create(request: CreateRecurringShipmentRequest): Promise<ApiResponse<RecurringShipment>> {
-    return this.http.post(this.wsPath(''), request);
+  /** Create a recurring shipment. The first run is at `firstRunUtc`. */
+  async create(request: CreateRecurringShipmentRequest): Promise<RecurringShipment> {
+    return this.http.post(this.wsPath(), request);
   }
 
-  /** Update a recurring shipment schedule. */
-  async update(
-    id: string,
-    request: UpdateRecurringShipmentRequest,
-  ): Promise<ApiResponse<RecurringShipment>> {
+  /** Change a recurring shipment. Fields left out stay as they are. */
+  async update(id: string, request: UpdateRecurringShipmentRequest): Promise<RecurringShipment> {
     return this.http.put(this.wsPath(id), request);
   }
 
-  /** Delete a recurring shipment schedule. */
-  async delete(id: string): Promise<ApiResponse<unknown>> {
-    return this.http.delete(this.wsPath(id));
+  /** Delete a recurring shipment. */
+  async delete(id: string): Promise<void> {
+    await this.http.delete(this.wsPath(id));
   }
 
-  /** Pause a recurring shipment (stops automatic execution without deleting). */
-  async pause(id: string): Promise<ApiResponse<RecurringShipment>> {
-    return this.http.post(this.wsPath(`${id}/pause`));
+  /** Stop scheduled runs until `resume` is called. */
+  async pause(id: string): Promise<void> {
+    await this.http.post(this.wsPath(`${id}/pause`));
   }
 
-  /** Resume a paused recurring shipment. */
-  async resume(id: string): Promise<ApiResponse<RecurringShipment>> {
-    return this.http.post(this.wsPath(`${id}/resume`));
+  /** Restart scheduled runs. */
+  async resume(id: string): Promise<void> {
+    await this.http.post(this.wsPath(`${id}/resume`));
   }
 
-  /** Trigger an immediate execution outside the normal schedule. */
-  async trigger(id: string): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.wsPath(`${id}/trigger`));
+  /**
+   * Run a recurring shipment now, which creates an order. Pass your own `idempotencyKey` to make a
+   * retry from your side safe too; the SDK's own retries always reuse one key.
+   */
+  async trigger(id: string, idempotencyKey?: string): Promise<void> {
+    await this.http.request('POST', this.wsPath(`${id}/trigger`), {
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+    });
   }
 }

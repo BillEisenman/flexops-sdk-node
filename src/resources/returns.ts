@@ -9,6 +9,7 @@
 import type { HttpClient } from '../http.js';
 import type {
   ApiResponse,
+  ReceiveReturnRequest,
   ReturnRequest,
   ReturnLabelRequest,
   ReturnAuthorization,
@@ -23,14 +24,15 @@ export class ReturnsResource {
   private wsPath(suffix: string): string {
     const id = this.getWorkspaceId();
     if (!id) throw new Error('workspaceId is required.');
-    return `/api/workspaces/${id}/returns/${suffix}`;
+    return `/api/workspaces/${id}/returns${suffix ? `/${suffix}` : ''}`;
   }
 
-  /** List all return authorizations. */
+  /** List return authorizations, optionally created between `startDate` and `endDate` (ISO 8601). */
   async list(query?: {
+    startDate?: string;
+    endDate?: string;
     page?: number;
     pageSize?: number;
-    status?: string;
   }): Promise<ApiResponse<ReturnAuthorization[]>> {
     return this.http.get(
       this.wsPath(''),
@@ -43,24 +45,9 @@ export class ReturnsResource {
     return this.http.get(this.wsPath(returnId));
   }
 
-  /** Create a return authorization (RMA). */
+  /** Create a return authorization (RMA) for an order. */
   async create(request: ReturnRequest): Promise<ApiResponse<ReturnAuthorization>> {
-    return this.http.post(this.wsPath(''), request);
-  }
-
-  /** Approve a return authorization. */
-  async approve(returnId: string): Promise<ApiResponse<ReturnAuthorization>> {
-    return this.http.post(this.wsPath(`${returnId}/approve`));
-  }
-
-  /** Reject a return authorization. */
-  async reject(returnId: string, reason: string): Promise<ApiResponse<ReturnAuthorization>> {
-    return this.http.post(this.wsPath(`${returnId}/reject`), { reason });
-  }
-
-  /** Cancel a return authorization. */
-  async cancel(returnId: string): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.wsPath(`${returnId}/cancel`));
+    return this.http.post(this.wsPath('rma'), request);
   }
 
   /**
@@ -71,17 +58,12 @@ export class ReturnsResource {
    * shipping preset has nothing else to take the package from and the call fails with a 400 that
    * names the missing fields.
    */
-  async generateLabel(returnId: string, request: ReturnLabelRequest = {}): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.wsPath(`${returnId}/label`), request);
+  async generateLabel(rmaNumber: string, request: ReturnLabelRequest = {}): Promise<ApiResponse<unknown>> {
+    return this.http.post(this.wsPath(`${rmaNumber}/label`), request);
   }
 
-  /** Mark items as received. */
-  async markReceived(returnId: string, items: { sku: string; quantity: number; condition: string }[]): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.wsPath(`${returnId}/receive`), { items });
-  }
-
-  /** Process refund for a return. */
-  async processRefund(returnId: string): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.wsPath(`${returnId}/refund`));
+  /** Record the inspected items of a returned package at a warehouse. */
+  async markReceived(rmaId: string, request: ReceiveReturnRequest): Promise<ApiResponse<unknown>> {
+    return this.http.post(this.wsPath(`${rmaId}/receive`), request);
   }
 }

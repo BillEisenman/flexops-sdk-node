@@ -32,12 +32,12 @@ export class PickupsResource {
 
   /** List scheduled pickups. */
   async list(): Promise<ApiResponse<PickupConfirmation[]>> {
-    return this.http.get(this.wsPath(''));
+    return this.http.get(this.wsPath('scheduled'));
   }
 
-  /** Get pickup details. */
-  async get(pickupId: string): Promise<ApiResponse<PickupConfirmation>> {
-    return this.http.get(this.wsPath(pickupId));
+  /** Get pickup details. The carrier defaults to `usps` on the Gateway. */
+  async get(pickupId: string, carrierCode?: string): Promise<ApiResponse<PickupConfirmation>> {
+    return this.http.get(this.wsPath(pickupId), { carrierCode });
   }
 
   /** Cancel a scheduled pickup. */

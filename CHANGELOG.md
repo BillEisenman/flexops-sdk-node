@@ -5,7 +5,82 @@ All notable changes to the FlexOps Node.js/TypeScript SDK are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - Unreleased
+
+3.0.0 limits the SDK to the documented FlexOps API (the published Gateway OpenAPI) and makes retries safe
+for purchases. A contract test now fails the build if any SDK method calls an undocumented operation.
+The changes made since 2.0.0 and listed further down also ship in this release.
+
+### Removed (breaking)
+- Resources that are not part of the public API: `apiKeys` (keys are managed in the portal) and `offsets`
+  (replaced by `carbonOffsets`).
+- `wallet.addFunds()`, `wallet.listTransactions()` and `wallet.configureAutoReload()`. Funding is managed in the portal.
+- `auth.register()`, `getProfile()`, `updateProfile()`, `changePassword()`, `forgotPassword()`, `resetPassword()` and
+  `verifyEmail()`. Account management lives in the portals.
+- `workspaces.create()` and `workspaces.update()`.
+- `returns.approve()`, `reject()`, `cancel()` and `processRefund()`. They are done in the portal.
+- `webhooks.get()`, `orders.create()`, `orders.cancel()`, `inventory.postAsnReceipt()` and `inventory.updateInventory()`.
+- Carrier label purchases through the legacy `/api/ApiProxy` pass-through, which the Gateway closes (410 Gone):
+  `carriers.usps.createReturnLabel()`, `carriers.usps.createInternationalLabel()`, `carriers.ups.createLabel()`,
+  `carriers.fedex.createShipment()`, `carriers.fedex.createReturnShipment()` and `carriers.dhl.createShipment()`.
+  Buy labels with `client.shipping.createLabel()`.
+- `carriers.dhl.updatePickup()`: it sent a PATCH, which the pass-through has no route for.
+
+### Changed (breaking)
+- Retries: every `POST`, `PUT` and `PATCH` sends an `Idempotency-Key` (yours, or one generated per call and reused on
+  every retry). Writes retry only on a network error, a timeout, 429, 502, 503, 504 and 409
+  `IDEMPOTENCY_CONFLICT`, never on 500. `DELETE` retries only on 429. Before, a timed-out purchase was retried
+  without a key and could be charged twice. A key reused with a different request gets 422
+  `IDEMPOTENCY_KEY_REUSED`, which is not retried.
+- `recurringShipments`, `reportSchedules` (2.x `reports`) and `emailTemplates` call the documented Gateway routes;
+  the 2.x paths and shapes never worked. Recurring shipments and email templates return the bare objects;
+  report schedules return the `{ success, data }` envelope; deletes, pause, resume and trigger return `undefined`.
+  Email templates are saved with `upsert()` by tracking event (`TrackingEmailEvent`) instead of `create()`/`update()`,
+  and `preview()` renders a subject and body you pass. New `RecurrenceInterval`, `ReportFormat` and `ReportFrequency`
+  values. Writes need a user token or an API key granted `recurring-shipments:write`, `report-schedules:write` or
+  `email-templates:write`.
+- The carrier writes through the legacy `/api/ApiProxy` pass-through (USPS rates, prices, cancels, pickups and scan
+  forms; UPS address, rate, pickup, transit, landed-cost, location, document and freight calls; all non-label FedEx
+  calls; DHL multi-piece rates, pickups, landed cost, screening and invoices) are marked `@deprecated`: they need a
+  user token, because the Gateway refuses API-key writes there with 403 `API_KEY_SCOPE_REQUIRED`, and they stop
+  working when the pass-through is retired on 2027-06-30. Move to `client.shipping`, `client.pickups` and
+  `client.scanForms`.
+- A `204` or empty response returns `undefined` instead of throwing a JSON parse error.
+- `auth.login()` stores the access token from `data.token`, which the Gateway returns; it read `data.accessToken`,
+  which the Gateway never sends, so a login never authenticated later calls. `LoginResponse` now describes the
+  Gateway response (`token`, `refreshToken`, `expiresAt`, user fields, `requiresTwoFactor`).
+- `auth.refreshToken(refreshToken, accessToken?)` sends the Gateway's `{ token, refreshToken }` body. The expired
+  access token defaults to the one the client holds; without one it throws `FlexOpsAuthError` and sends nothing.
+- `shipping.validateAddress()` calls the documented `POST /api/addresses/validate` with its flat body and returns the
+  Gateway `AddressValidationResult` (`isValid`, `suggestedAddress`, `isResidential`, `warnings`,
+  `validationUnavailable`).
+- `wallet.getBalance()` reads `GET /api/wallet/my-balance` for the configured workspace and returns
+  `{ hasWallet, balanceCents, balance }`.
+- `hsCodes` calls `/api/shipping/hs-codes/search`, `/api/shipping/hs-codes/{code}` and `/api/shipping/landed-cost`,
+  and its constructor no longer takes a workspace.
+- `insurance.purchase()` posts to `insurance/policies` (it called a route that does not exist), `fileClaim()` posts
+  the policy id in the body to `insurance/claims`, and `void(policyId)` cancels a policy. A shipment that is
+  already insured is refused with 409 `ALREADY_EXISTS`.
+- `returns.create()` posts to `returns/rma` with a numeric `orderId`; `generateLabel(rmaNumber, ...)` takes the RMA
+  number and an optional `rateIndicator`; `markReceived(rmaId, { rmaNumber, warehouseId, inspectedItems })`
+  records the inspected items. `returns.list()` filters by `startDate`, `endDate`, `page` and `pageSize`; the
+  `status` filter, which the Gateway ignored, is gone.
+- `rules.create()` and `update()` take `ShippingRuleInput` (`isEnabled`, not `isActive`); `reorder(ids)` posts
+  `{ rules: [{ ruleId, priority }] }`.
+- `pickups.list()` reads the scheduled pickups; `get()` takes an optional `carrierCode`. `PickupRequest` and
+  `PickupConfirmation` use the Gateway field names.
+- Workspace roles are numbers on the wire: use the new `WorkspaceRole` (`Owner`, `Admin`, `Member`, `Merchant`).
+  `inviteMember(email, role = WorkspaceRole.Member)` and `updateMemberRole()` send them. `workspaces.get()`
+  returns `WorkspaceDetail` and `listMembers()` returns `{ members, pendingInvites, userLimit, ... }`.
+
+### Added
+- `client.carbonOffsets`: `quote`, `purchase`, `list`, `get`, `getSummary`, `getSettings`, `updateSettings`.
+- `insurance.purchase(request, idempotencyKey?)` and `carbonOffsets.purchase(request, idempotencyKey?)` accept your own
+  `Idempotency-Key`. Store it with the purchase and reuse it when your app retries, so the Gateway returns the first
+  result instead of charging again.
+- `rules.test()` dry-runs the rules against a sample shipment; `webhooks.test()` sends a test delivery.
+
+### Since 2.0.0 (also in 3.0.0)
 
 ### Changed (breaking)
 - Webhook subscriptions use the event names and fields the Gateway actually reads and returns. `CreateWebhookRequest.events` (now optional) and the new `UpdateWebhookRequest.events` take `WebhookEventType` values and are sent as the Gateway's comma-separated `eventTypes`; before, the Gateway ignored the `events` field and subscribed to every event. `create()` and `update()` throw `FlexOpsError` with code `UnknownWebhookEvent`, without calling the API, for an empty list or a name FlexOps never sends (such as `label.created`). `WebhookSubscription` now describes the Gateway response: `eventTypes` (string), `status`, `description`, `consecutiveFailures`, `updatedAt`, and `secret` only on create; the never-populated `events` and `isActive` are removed.
@@ -18,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `WebhooksResource.verifySignature` returned `false` for every input when the SDK was loaded as an ES module: the bundled `require` shim threw inside its `try`. It now loads `node:crypto` through `process.getBuiltinModule` (falling back to `require` in CommonJS) (#41).
 - README webhook sample: verifies the raw body with the timestamp header, and reads the event name from `X-FlexOps-Event`; the body is the event data with no `{ type, data }` envelope (#41).
 - `shipping.createLabel()` translates the deprecated `CreateLabelRequest` (`carrier`, `fromAddress`, `parcel`, ...) to the Gateway wire shape and sends `idempotencyKey` as the `Idempotency-Key` header; `returnLabel: true` is refused with `UnsupportedRequestShape` instead of buying an outbound label (#6).
-- `shipping.validateAddress()` sends the Gateway `{ address }` request and accepts `ShippingAddress` as well as `Address` (#6).
+- `shipping.validateAddress()` accepts `ShippingAddress` as well as `Address` (#6).
 - Zip-only `LegacyRateRequest` is refused client-side with `UnsupportedRequestShape`; the Gateway needs full addresses (#6).
 
 ### Fixed

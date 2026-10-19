@@ -7,7 +7,7 @@
 // ***********************************************************************
 
 import type { HttpClient } from '../http.js';
-import type { ApiResponse, ShippingRule } from '../types.js';
+import type { ApiResponse, ShippingRule, ShippingRuleInput, ShippingRuleTestRequest } from '../types.js';
 
 export class RulesResource {
   constructor(
@@ -32,12 +32,12 @@ export class RulesResource {
   }
 
   /** Create a shipping rule. */
-  async create(rule: Omit<ShippingRule, 'id'>): Promise<ApiResponse<ShippingRule>> {
+  async create(rule: ShippingRuleInput): Promise<ApiResponse<ShippingRule>> {
     return this.http.post(this.wsPath(''), rule);
   }
 
-  /** Update a shipping rule. */
-  async update(ruleId: string, rule: Partial<ShippingRule>): Promise<ApiResponse<ShippingRule>> {
+  /** Replace a shipping rule. */
+  async update(ruleId: string, rule: ShippingRuleInput): Promise<ApiResponse<ShippingRule>> {
     return this.http.put(this.wsPath(ruleId), rule);
   }
 
@@ -46,8 +46,15 @@ export class RulesResource {
     return this.http.delete(this.wsPath(ruleId));
   }
 
-  /** Reorder rules (set priority). */
-  async reorder(ruleIds: string[]): Promise<ApiResponse<unknown>> {
-    return this.http.put(this.wsPath('reorder'), { ruleIds });
+  /** Reorder rules: each listed rule gets its position in `ruleIds` as its priority (0 first). */
+  async reorder(ruleIds: string[]): Promise<ApiResponse<ShippingRule[]>> {
+    return this.http.post(this.wsPath('reorder'), {
+      rules: ruleIds.map((ruleId, priority) => ({ ruleId, priority })),
+    });
+  }
+
+  /** Dry-run the workspace's rules against a sample shipment, without changing anything. */
+  async test(request: ShippingRuleTestRequest): Promise<ApiResponse<unknown>> {
+    return this.http.post(this.wsPath('test'), { tags: [], ...request });
   }
 }
