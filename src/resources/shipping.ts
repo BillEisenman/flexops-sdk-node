@@ -135,7 +135,16 @@ export class ShippingResource {
 
   /** Validate and correct a shipping address. */
   async validateAddress(address: Address | ShippingAddress): Promise<AddressValidationResult> {
-    return this.http.post('/api/shipping/addresses/validate', { address: toShippingAddress(address) });
+    const a = toShippingAddress(address);
+    return this.http.post('/api/addresses/validate', {
+      name: a.name,
+      line1: a.addressLine1,
+      line2: a.addressLine2,
+      city: a.city,
+      state: a.stateProvince,
+      postalCode: a.postalCode,
+      country: a.countryCode ?? 'US',
+    });
   }
 
   // -----------------------------------------------------------------------

@@ -7,12 +7,8 @@
 // ***********************************************************************
 
 import type { HttpClient } from '../http.js';
-import type {
-  ApiResponse,
-  Workspace,
-  CreateWorkspaceRequest,
-  WorkspaceMember,
-} from '../types.js';
+import { WorkspaceRole } from '../types.js';
+import type { ApiResponse, Workspace, WorkspaceDetail, WorkspaceMemberList } from '../types.js';
 
 export class WorkspacesResource {
   constructor(
@@ -32,28 +28,18 @@ export class WorkspacesResource {
   }
 
   /** Get details for a specific workspace. */
-  async get(workspaceId?: string): Promise<ApiResponse<Workspace>> {
+  async get(workspaceId?: string): Promise<ApiResponse<WorkspaceDetail>> {
     const id = workspaceId ?? this.getWorkspaceId();
     return this.http.get(`/api/workspaces/${id}`);
   }
 
-  /** Create a new workspace. */
-  async create(request: CreateWorkspaceRequest): Promise<ApiResponse<Workspace>> {
-    return this.http.post('/api/workspaces', request);
-  }
-
-  /** Update workspace settings. */
-  async update(data: Partial<Workspace>): Promise<ApiResponse<Workspace>> {
-    return this.http.put(this.wsPath(), data);
-  }
-
-  /** List members of the current workspace. */
-  async listMembers(): Promise<ApiResponse<WorkspaceMember[]>> {
+  /** List the current workspace's members and pending invites. */
+  async listMembers(): Promise<ApiResponse<WorkspaceMemberList>> {
     return this.http.get(this.wsPath('members'));
   }
 
   /** Invite a user to the workspace. */
-  async inviteMember(email: string, role: WorkspaceMember['role'] = 'Member'): Promise<ApiResponse<unknown>> {
+  async inviteMember(email: string, role: WorkspaceRole = WorkspaceRole.Member): Promise<ApiResponse<unknown>> {
     return this.http.post(this.wsPath('members/invite'), { email, role });
   }
 
@@ -62,8 +48,8 @@ export class WorkspacesResource {
     return this.http.delete(this.wsPath(`members/${userId}`));
   }
 
-  /** Update a member's role. */
-  async updateMemberRole(userId: string, role: WorkspaceMember['role']): Promise<ApiResponse<unknown>> {
-    return this.http.put(this.wsPath(`members/${userId}/role`), { role });
+  /** Change a member's role. */
+  async updateMemberRole(userId: string, role: WorkspaceRole): Promise<ApiResponse<unknown>> {
+    return this.http.put(this.wsPath(`members/${userId}/role`), { newRole: role });
   }
 }

@@ -7,43 +7,48 @@
 // ***********************************************************************
 
 import type { HttpClient } from '../http.js';
-import type {
-  ApiResponse,
-  LoginRequest,
-  LoginResponse,
-  RegisterRequest,
-} from '../types.js';
+import { FlexOpsAuthError } from '../types.js';
+import type { ApiResponse, LoginRequest, LoginResponse } from '../types.js';
 
+/**
+ * Token acquisition for user-token calls. Account management (sign-up, profile, passwords, email
+ * verification) lives in the FlexOps portals; integrations normally use an API key instead.
+ */
 export class AuthResource {
   constructor(private readonly http: HttpClient) {}
 
-  /** Authenticate with email and password. Returns JWT tokens. */
+  /**
+   * Authenticate with email and password. On success the returned access token (`data.token`) is
+   * used for later requests. When `data.requiresTwoFactor` is true no token is issued yet.
+   */
   async login(request: LoginRequest): Promise<ApiResponse<LoginResponse>> {
     const result = await this.http.post<ApiResponse<LoginResponse>>(
       '/api/Account/login',
       request,
     );
-    if (result.data?.accessToken) {
-      this.http.setAccessToken(result.data.accessToken);
+    if (result.data?.token) {
+      this.http.setAccessToken(result.data.token);
     }
     return result;
   }
 
-  /** Register a new account. */
-  async register(request: RegisterRequest): Promise<ApiResponse<unknown>> {
-    return this.http.post('/api/Account/register', request);
-  }
-
-  /** Refresh an expired access token. */
-  async refreshToken(refreshToken: string): Promise<ApiResponse<LoginResponse>> {
-    // The refresh token is sent via X-Current-Session-Token header
-    const response = await this.http.request<ApiResponse<LoginResponse>>(
-      'POST',
+  /**
+   * Exchange a refresh token for a new access token. The Gateway needs the expired access token
+   * too; it defaults to the one this client holds.
+   */
+  async refreshToken(
+    refreshToken: string,
+    accessToken: string | undefined = this.http.getAccessToken(),
+  ): Promise<ApiResponse<LoginResponse>> {
+    if (!accessToken) {
+      throw new FlexOpsAuthError('refreshToken needs the expired access token; log in first or pass it.');
+    }
+    const response = await this.http.post<ApiResponse<LoginResponse>>(
       '/api/Account/refresh-token',
-      { headers: { 'X-Current-Session-Token': refreshToken } },
+      { token: accessToken, refreshToken },
     );
-    if (response.data?.accessToken) {
-      this.http.setAccessToken(response.data.accessToken);
+    if (response.data?.token) {
+      this.http.setAccessToken(response.data.token);
     }
     return response;
   }
@@ -51,38 +56,5 @@ export class AuthResource {
   /** Log out and invalidate the current session. */
   async logout(): Promise<ApiResponse<unknown>> {
     return this.http.post('/api/Account/logout');
-  }
-
-  /** Get the current user's profile. */
-  async getProfile(): Promise<ApiResponse<unknown>> {
-    return this.http.get('/api/Account/profile');
-  }
-
-  /** Update the current user's profile. */
-  async updateProfile(data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
-    return this.http.put('/api/Account/profile', data);
-  }
-
-  /** Change the current user's password. */
-  async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse<unknown>> {
-    return this.http.post('/api/Account/change-password', {
-      currentPassword,
-      newPassword,
-    });
-  }
-
-  /** Request a password reset email. */
-  async forgotPassword(email: string): Promise<ApiResponse<unknown>> {
-    return this.http.post('/api/Account/forgot-password', { email });
-  }
-
-  /** Reset password using a reset token. */
-  async resetPassword(token: string, newPassword: string): Promise<ApiResponse<unknown>> {
-    return this.http.post('/api/Account/reset-password', { token, newPassword });
-  }
-
-  /** Verify email with the verification token. */
-  async verifyEmail(token: string): Promise<ApiResponse<unknown>> {
-    return this.http.post('/api/Account/verify-email', { token });
   }
 }

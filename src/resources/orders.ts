@@ -16,11 +16,6 @@ export class OrdersResource {
     return `/api/ApiProxy/api/v1/Order/${endpoint}`;
   }
 
-  /** Create a new order. */
-  async create(order: unknown): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.path('postNewOrder'), order);
-  }
-
   /** Get new orders awaiting processing. */
   async getNewOrders(params?: Record<string, string>): Promise<ApiResponse<Order[]>> {
     return this.http.get(this.path('getNewOrderList'), params);
@@ -44,11 +39,6 @@ export class OrdersResource {
   /** Get order status by order number. */
   async getStatus(orderNumber: string): Promise<ApiResponse<unknown>> {
     return this.http.get(this.path('getIndividualOrderStatusByOrderNumber'), { orderNumber });
-  }
-
-  /** Cancel an order. */
-  async cancel(orderNumber: string): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.path('cancelOrderByOrderNumber'), { orderNumber });
   }
 
   /** Get all items for an order. */

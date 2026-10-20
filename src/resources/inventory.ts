@@ -12,11 +12,6 @@ import type { ApiResponse } from '../types.js';
 export class InventoryResource {
   constructor(private readonly http: HttpClient) {}
 
-  /** Post a new ASN (Advance Shipment Notice) receipt. */
-  async postAsnReceipt(receipt: unknown): Promise<ApiResponse<unknown>> {
-    return this.http.post('/api/ApiProxy/api/v1/Inventory/postNewAsnReceipt', receipt);
-  }
-
   /** Get a warehouse inventory snapshot. */
   async getWarehouseSnapshot(params?: Record<string, string>): Promise<ApiResponse<unknown>> {
     return this.http.get('/api/ApiProxy/api/v1/Inventory/getWarehouseInventorySnapshot', params);
@@ -30,10 +25,5 @@ export class InventoryResource {
   /** Get the list of all part numbers. */
   async getPartNumbers(params?: Record<string, string>): Promise<ApiResponse<unknown>> {
     return this.http.get('/api/ApiProxy/api/v1/Inventory/getPartNumberList', params);
-  }
-
-  /** Update customer inventory (V2). */
-  async updateInventory(data: unknown): Promise<ApiResponse<unknown>> {
-    return this.http.post('/api/ApiProxy/api/v2/Inventory/postCustomerInventoryUpdate', data);
   }
 }

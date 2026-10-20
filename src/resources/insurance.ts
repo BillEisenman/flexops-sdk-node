@@ -7,7 +7,15 @@
 // ***********************************************************************
 
 import type { HttpClient } from '../http.js';
-import type { ApiResponse, InsuranceQuote, InsurancePolicy } from '../types.js';
+import type {
+  ApiResponse,
+  FileClaimRequest,
+  InsuranceClaim,
+  InsurancePolicy,
+  InsuranceQuote,
+  InsuranceQuoteRequest,
+  PurchaseInsuranceRequest,
+} from '../types.js';
 
 export class InsuranceResource {
   constructor(
@@ -27,34 +35,32 @@ export class InsuranceResource {
   }
 
   /** Get an insurance quote. */
-  async getQuote(request: {
-    carrier: string;
-    declaredValue: number;
-    provider?: string;
-  }): Promise<ApiResponse<InsuranceQuote>> {
+  async getQuote(request: InsuranceQuoteRequest): Promise<ApiResponse<InsuranceQuote>> {
     return this.http.post(this.wsPath('quote'), request);
   }
 
-  /** Purchase insurance for a shipment. */
-  async purchase(request: {
-    trackingNumber: string;
-    carrier: string;
-    declaredValue: number;
-    provider?: string;
-  }): Promise<ApiResponse<InsurancePolicy>> {
-    return this.http.post(this.wsPath('purchase'), request);
+  /**
+   * Purchase insurance for a shipment. The premium is charged to the workspace wallet. A shipment
+   * that already has a policy in force is refused with 409 `ALREADY_EXISTS`.
+   *
+   * Pass an `idempotencyKey` you store with the purchase to make your own retry safe: after an error or
+   * a timeout, retry with the same key and the Gateway returns the first result instead of buying again.
+   * Without one, the SDK's own retries still share a key, but a new call gets a new key.
+   */
+  async purchase(request: PurchaseInsuranceRequest, idempotencyKey?: string): Promise<ApiResponse<InsurancePolicy>> {
+    return this.http.request('POST', this.wsPath('policies'), {
+      body: request,
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+    });
   }
 
-  /** Void an insurance policy. */
-  async void(policyId: string): Promise<ApiResponse<unknown>> {
+  /** Void (cancel) an insurance policy. */
+  async void(policyId: string): Promise<ApiResponse<InsurancePolicy>> {
     return this.http.delete(this.wsPath(`policies/${policyId}`));
   }
 
-  /** File an insurance claim. */
-  async fileClaim(policyId: string, claim: {
-    description: string;
-    claimAmount: number;
-  }): Promise<ApiResponse<unknown>> {
-    return this.http.post(this.wsPath(`policies/${policyId}/claims`), claim);
+  /** File a claim against a policy. */
+  async fileClaim(claim: FileClaimRequest): Promise<ApiResponse<InsuranceClaim>> {
+    return this.http.post(this.wsPath('claims'), claim);
   }
 }
