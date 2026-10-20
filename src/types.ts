@@ -785,6 +785,10 @@ export interface CarrierRecommendationRequest {
 
 export interface CarrierRecommendationResponse {
   lane: string;
+  /**
+   * Shipments analyzed: exact for the workspace's own data, a band floor
+   * (5, 10, 25, 50, 100, 250, 500, 1000) for each carrier scored on FlexOps network data.
+   */
   sampleSize: number;
   recommendations: CarrierRecommendation[];
 }
@@ -794,7 +798,13 @@ export interface CarrierRecommendation {
   score: number;
   onTimePercent: number;
   avgTransitDays: number;
+  /**
+   * The workspace's own average label cost in USD. `0` when the carrier was scored on
+   * FlexOps network data: network cost is not reported, so `0` does not mean free.
+   * The API's `dataSource` field (`workspace` or `network`) says which; this type does not include it yet.
+   */
   avgCost: number;
+  /** Shipments analyzed for this carrier: exact for workspace data, a band floor for network data. */
   shipmentCount: number;
   exceptionRate: number;
   reason: string;
@@ -818,6 +828,7 @@ export interface DeliveryPredictionResponse {
   worstCaseDelivery: string;
   predictedTransitDays: number;
   confidence: number;
+  /** Shipments used: exact for the workspace's own data, a band floor for FlexOps network data. */
   sampleSize: number;
   onTimeRate: number;
 }
