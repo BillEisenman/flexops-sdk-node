@@ -41,9 +41,9 @@ export class RulesResource {
     return this.http.put(this.wsPath(ruleId), rule);
   }
 
-  /** Delete a shipping rule. */
-  async delete(ruleId: string): Promise<ApiResponse<unknown>> {
-    return this.http.delete(this.wsPath(ruleId));
+  /** Delete a shipping rule. The Gateway answers 204 No Content, so there is no result. */
+  async delete(ruleId: string): Promise<void> {
+    await this.http.delete(this.wsPath(ruleId));
   }
 
   /** Reorder rules: each listed rule gets its position in `ruleIds` as its priority (0 first). */

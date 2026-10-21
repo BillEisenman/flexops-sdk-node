@@ -14,6 +14,7 @@ import {
   TrackingEmailEvent,
   type RateRequest,
 } from '../src/index.js';
+import { HttpClient } from '../src/http.js';
 
 // Mock fetch for all tests
 const mockFetch = vi.fn();
@@ -531,8 +532,18 @@ describe('FlexOps Client', () => {
 
     it('returns undefined for a 204 instead of the raw response', async () => {
       mockFetch.mockReturnValueOnce(Promise.resolve(new Response(null, { status: 204 })));
+      const http = new HttpClient({ baseUrl: 'http://localhost:5000', fetch: mockFetch as unknown as typeof fetch });
 
-      await expect(retryingClient().webhooks.delete('wh-001')).resolves.toBeUndefined();
+      await expect(http.delete('/api/workspaces/ws-test-001/webhooks/wh-001')).resolves.toBeUndefined();
+    });
+
+    it('does not parse a body from a 204 that is labelled JSON', async () => {
+      mockFetch.mockReturnValueOnce(
+        Promise.resolve(new Response(null, { status: 204, headers: { 'content-type': 'application/json' } })),
+      );
+      const http = new HttpClient({ baseUrl: 'http://localhost:5000', fetch: mockFetch as unknown as typeof fetch });
+
+      await expect(http.delete('/api/workspaces/ws-test-001/webhooks/wh-001')).resolves.toBeUndefined();
     });
   });
 
@@ -830,6 +841,21 @@ describe('documented-API alignment (3.0)', () => {
 
     expect(sent()[1].method).toBe('POST');
     expect(sentBody()).toEqual({ rules: [{ ruleId: 'r-a', priority: 0 }, { ruleId: 'r-b', priority: 1 }] });
+  });
+
+  it('deletes webhooks and rules on their documented routes and resolves nothing for the 204', async () => {
+    mockFetch
+      .mockReturnValueOnce(Promise.resolve(new Response(null, { status: 204 })))
+      .mockReturnValueOnce(Promise.resolve(new Response(null, { status: 204 })));
+    const client = createClient();
+
+    await expect(client.webhooks.delete('wh-1')).resolves.toBeUndefined();
+    await expect(client.rules.delete('r-1')).resolves.toBeUndefined();
+
+    expect(sent(0)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/webhooks/wh-1');
+    expect(sent(0)[1].method).toBe('DELETE');
+    expect(sent(1)[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/shipping-rules/r-1');
+    expect(sent(1)[1].method).toBe('DELETE');
   });
 
   it('buys insurance through policies and carbon offsets through purchase, each with a key', async () => {

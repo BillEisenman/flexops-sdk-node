@@ -51,9 +51,9 @@ export class WebhooksResource {
     return this.http.put(this.wsPath(webhookId), toWireRequest(data));
   }
 
-  /** Delete a webhook subscription. */
-  async delete(webhookId: string): Promise<ApiResponse<unknown>> {
-    return this.http.delete(this.wsPath(webhookId));
+  /** Delete a webhook subscription. The Gateway answers 204 No Content, so there is no result. */
+  async delete(webhookId: string): Promise<void> {
+    await this.http.delete(this.wsPath(webhookId));
   }
 
   /** Rotate the signing secret for a webhook. */
