@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `webhooks.delete()` and `rules.delete()` are typed `Promise<void>`. The Gateway answers both with 204 No Content,
+  so they always resolved to `undefined`, but were typed as the `{ success, data }` envelope, which let code such as
+  `(await client.webhooks.delete(id)).success` compile and then throw a `TypeError`.
+
 ## [3.0.0] - 2026-10-19
 
 3.0.0 limits the SDK to the documented FlexOps API (the published Gateway OpenAPI) and makes retries safe
