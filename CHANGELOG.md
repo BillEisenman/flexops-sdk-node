@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-22
+
+3.1.0 types batch labels with the Gateway's order-based request. Existing code keeps compiling.
+
 ### Added
 - `CreateBatchLabelRequest` and `BatchLabelItem`, the Gateway batch body: each item is an order (`orderId`) with the
   package weight in ounces and size in inches. `BatchLabelItemResult` types the per-order rows on a job.
