@@ -124,19 +124,35 @@ if (result.validationUnavailable) {
 
 ### Batch Labels
 
-```typescript
-// Preview (dry-run) before purchasing
-const preview = await client.shipping.previewBatch({
-  items: [/* array of CreateLabelRequest */],
-});
+Each item is an order you already have in FlexOps; the addresses come from the order. Leave out
+`carrierCode` and `serviceCode` to let your shipping rules choose.
 
-// Create the batch
-const batch = await client.shipping.createBatch({
-  items: [/* array of CreateLabelRequest */],
-});
+```typescript
+import { HazmatClassification, type CreateBatchLabelRequest } from '@flexops/sdk';
+
+const request: CreateBatchLabelRequest = {
+  items: [
+    {
+      orderId: 12345,
+      packageWeightInOunces: 12,
+      packageLengthInInches: 10,
+      packageWidthInInches: 8,
+      packageHeightInInches: 4,
+      carrierCode: 'USPS',
+      serviceCode: 'PRIORITY',
+      hazmatClassification: HazmatClassification.None,
+    },
+  ],
+};
+
+// Preview (dry-run): per-order rates and the total, nothing bought
+const preview = await client.shipping.previewBatch(request);
+
+// Create the batch; it runs in the background
+const batch = await client.shipping.createBatch(request);
 
 // Check status
-const status = await client.shipping.getBatchStatus(batch.data.jobId);
+const status = await client.shipping.getBatchStatus(batch.data!.jobId);
 ```
 
 ## Carrier-Specific Calls

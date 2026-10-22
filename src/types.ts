@@ -408,6 +408,45 @@ export interface SuggestedAddress {
 // Batch Labels
 // ---------------------------------------------------------------------------
 
+/** One order in a batch: the Gateway `BatchLabelItemRequest`. Addresses come from the order. */
+export interface BatchLabelItem {
+  /** The order to ship. Required and positive. */
+  orderId: number;
+  orderNumber?: string;
+  /** Package weight in ounces. The order does not store it. */
+  packageWeightInOunces: number;
+  packageLengthInInches: number;
+  packageWidthInInches: number;
+  packageHeightInInches: number;
+  /** Leave out the carrier and service to let your shipping rules choose. */
+  carrierCode?: string;
+  serviceCode?: string;
+  deliveryConfirmationRequired?: boolean;
+  signatureConfirmationRequired?: boolean;
+  insuranceCoverageRequested?: boolean;
+  /** Coverage in USD. Needs `insuranceCoverageRequested: true`; left out, the order value is insured. */
+  insuredValue?: number;
+  labelFormat?: 'PDF' | 'PNG' | 'ZPL';
+  shipDate?: string;
+  /**
+   * What the parcel holds. Batch labels accept only `HazmatClassification.None`; buy HAZMAT
+   * labels one at a time with `createLabel`. The SDK never fills it in.
+   */
+  hazmatClassification?: HazmatClassification;
+}
+
+/** The Gateway `CreateBatchLabelRequest` for `shipping.createBatch` and `shipping.previewBatch`. */
+export interface CreateBatchLabelRequest {
+  /** 1 to 2000 orders. */
+  items: BatchLabelItem[];
+  /** Called when the job finishes. */
+  callbackUrl?: string;
+}
+
+/**
+ * @deprecated The Gateway refuses this shape: batch items are orders, not labels. Use
+ * CreateBatchLabelRequest.
+ */
 export interface BatchLabelRequest {
   items: CreateLabelRequest[];
   idempotencyKey?: string;
@@ -415,11 +454,38 @@ export interface BatchLabelRequest {
 
 export interface BatchLabelJob {
   jobId: string;
-  status: 'Queued' | 'Processing' | 'Completed' | 'Failed';
+  status: 'Pending' | 'Processing' | 'Completed' | 'CompletedWithErrors' | 'Failed';
   totalItems: number;
   completedItems: number;
   failedItems: number;
+  isDryRun?: boolean;
+  /** Total estimated cost; set on a preview. */
+  totalEstimatedCost?: number | null;
+  /** True when the job ran with a test key: no real labels and no wallet charge. */
+  isSandbox?: boolean;
   createdAt: string;
+  completedAt?: string | null;
+  statusUrl?: string | null;
+  /** One row per order on a preview. */
+  previewItems?: BatchLabelItemResult[];
+}
+
+/** One order's outcome in a batch job. */
+export interface BatchLabelItemResult {
+  itemId: string;
+  orderId: number;
+  orderNumber?: string | null;
+  carrierCode?: string | null;
+  serviceCode?: string | null;
+  status: 'Pending' | 'Completed' | 'Failed';
+  trackingNumber?: string | null;
+  labelUrl?: string | null;
+  rate?: number | null;
+  errorMessage?: string | null;
+  /** Stable refusal code when the item failed, such as `SpendCapReached`. */
+  errorCode?: string | null;
+  /** True only when the label was clearly not bought, so sending the order again is safe. */
+  canRetry?: boolean;
 }
 
 // ---------------------------------------------------------------------------
