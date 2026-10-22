@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `CreateBatchLabelRequest` and `BatchLabelItem`, the Gateway batch body: each item is an order (`orderId`) with the
+  package weight in ounces and size in inches. `BatchLabelItemResult` types the per-order rows on a job.
+
 ### Fixed
+- `shipping.createBatch()` and `previewBatch()` are typed with `CreateBatchLabelRequest`. They were typed with
+  `BatchLabelRequest`, whose items are label requests, and the Gateway refuses those with 400
+  ("OrderId must be a positive number"). `BatchLabelRequest` still compiles but is deprecated.
+- `BatchLabelJob.status` lists the statuses the Gateway sends (`Pending`, `Processing`, `Completed`,
+  `CompletedWithErrors`, `Failed`); it listed `Queued`, which the Gateway never sends. The job also types
+  `isDryRun`, `totalEstimatedCost`, `isSandbox`, `completedAt`, `statusUrl` and `previewItems`.
 - `webhooks.delete()` and `rules.delete()` are typed `Promise<void>`. The Gateway answers both with 204 No Content,
   so they always resolved to `undefined`, but were typed as the `{ success, data }` envelope, which let code such as
   `(await client.webhooks.delete(id)).success` compile and then throw a `TypeError`.

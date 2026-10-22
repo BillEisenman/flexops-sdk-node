@@ -13,6 +13,7 @@ import {
   ReportFrequency,
   TrackingEmailEvent,
   type RateRequest,
+  type CreateBatchLabelRequest,
 } from '../src/index.js';
 import { HttpClient } from '../src/http.js';
 
@@ -178,6 +179,88 @@ describe('FlexOps Client', () => {
 
       expect(result.carrier).toBe('USPS');
       expect(result.events).toHaveLength(1);
+    });
+
+    // The Gateway's batch items are orders (BatchLabelItemRequest), not labels: it refuses an item
+    // without a positive orderId and the package measurements.
+    const batchRequest: CreateBatchLabelRequest = {
+      items: [
+        {
+          orderId: 15552619,
+          orderNumber: 'SBOX-001',
+          packageWeightInOunces: 12,
+          packageLengthInInches: 10,
+          packageWidthInInches: 8,
+          packageHeightInInches: 4,
+          carrierCode: 'USPS',
+          serviceCode: 'PRIORITY',
+          hazmatClassification: HazmatClassification.None,
+        },
+      ],
+    };
+
+    it('previews a batch with order-based items and reads the preview rows', async () => {
+      mockFetch.mockReturnValueOnce(
+        jsonResponse({
+          success: true,
+          data: {
+            jobId: '3f9c1e2a-0000-4000-8000-000000000001',
+            status: 'Pending',
+            totalItems: 1,
+            completedItems: 0,
+            failedItems: 0,
+            isDryRun: true,
+            totalEstimatedCost: 9.85,
+            isSandbox: true,
+            createdAt: '2026-10-22T20:00:00Z',
+            previewItems: [
+              { itemId: 'a1', orderId: 15552619, orderNumber: 'SBOX-001', status: 'Pending', rate: 9.85, canRetry: false },
+            ],
+          },
+        }),
+      );
+
+      const client = createClient();
+      const preview = await client.shipping.previewBatch(batchRequest);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5000/api/workspaces/ws-test-001/labels/batch/preview',
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual(batchRequest);
+      expect(preview.data?.status).toBe('Pending');
+      expect(preview.data?.totalEstimatedCost).toBe(9.85);
+      expect(preview.data?.previewItems?.[0]?.orderId).toBe(15552619);
+    });
+
+    it('creates a batch with order-based items', async () => {
+      mockFetch.mockReturnValueOnce(
+        jsonResponse(
+          {
+            success: true,
+            data: {
+              jobId: '3f9c1e2a-0000-4000-8000-000000000002',
+              status: 'Pending',
+              totalItems: 1,
+              completedItems: 0,
+              failedItems: 0,
+              createdAt: '2026-10-22T20:00:00Z',
+              statusUrl: '/api/workspaces/ws-test-001/labels/batch/3f9c1e2a-0000-4000-8000-000000000002',
+            },
+          },
+          202,
+        ),
+      );
+
+      const client = createClient();
+      const batch = await client.shipping.createBatch({ ...batchRequest, callbackUrl: 'https://example.com/batch-done' });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5000/api/workspaces/ws-test-001/labels/batch',
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({ ...batchRequest, callbackUrl: 'https://example.com/batch-done' });
+      expect(batch.data?.jobId).toBe('3f9c1e2a-0000-4000-8000-000000000002');
     });
   });
 

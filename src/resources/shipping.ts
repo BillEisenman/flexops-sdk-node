@@ -23,6 +23,7 @@ import type {
   Address,
   ShippingAddress,
   CanonicalRateRequest,
+  CreateBatchLabelRequest,
   BatchLabelRequest,
   BatchLabelJob,
   CarrierRecommendationRequest,
@@ -151,13 +152,22 @@ export class ShippingResource {
   // Batch Labels
   // -----------------------------------------------------------------------
 
-  /** Create labels in batch. */
-  async createBatch(request: BatchLabelRequest): Promise<ApiResponse<BatchLabelJob>> {
+  /**
+   * Create labels for a batch of orders. The job runs in the background; poll `getBatchStatus`.
+   * The request is sent as given; set `hazmatClassification` on an item only when you have a declaration.
+   */
+  createBatch(request: CreateBatchLabelRequest): Promise<ApiResponse<BatchLabelJob>>;
+  /** @deprecated The Gateway refuses label-shaped batch items. Pass a CreateBatchLabelRequest. */
+  createBatch(request: BatchLabelRequest): Promise<ApiResponse<BatchLabelJob>>;
+  async createBatch(request: CreateBatchLabelRequest | BatchLabelRequest): Promise<ApiResponse<BatchLabelJob>> {
     return this.http.post(this.wsPath('labels/batch'), request);
   }
 
-  /** Preview a batch without purchasing (dry-run). */
-  async previewBatch(request: BatchLabelRequest): Promise<ApiResponse<BatchLabelJob>> {
+  /** Preview a batch of orders without buying labels (dry-run): per-order rates and the total cost. */
+  previewBatch(request: CreateBatchLabelRequest): Promise<ApiResponse<BatchLabelJob>>;
+  /** @deprecated The Gateway refuses label-shaped batch items. Pass a CreateBatchLabelRequest. */
+  previewBatch(request: BatchLabelRequest): Promise<ApiResponse<BatchLabelJob>>;
+  async previewBatch(request: CreateBatchLabelRequest | BatchLabelRequest): Promise<ApiResponse<BatchLabelJob>> {
     return this.http.post(this.wsPath('labels/batch/preview'), request);
   }
 
