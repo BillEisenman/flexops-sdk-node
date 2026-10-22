@@ -28,7 +28,7 @@ npm install @flexops/sdk
 import { FlexOps, HazmatClassification } from '@flexops/sdk';
 
 const client = new FlexOps({
-  apiKey: 'fxk_live_...',
+  apiKey: 'live_...',
   workspaceId: 'your-workspace-id',
 });
 ```
@@ -268,7 +268,7 @@ Every SDK method is a thin wrapper around the FlexOps REST API. If you want to v
 ```bash
 # Shop rates across all connected carriers
 curl -X POST https://gateway.flexops.io/api/shipping/rates \
-  -H "X-API-Key: fxk_live_..." \
+  -H "X-API-Key: live_..." \
   -H "Content-Type: application/json" \
   -d '{
     "origin": {"addressLine1": "123 Main St", "city": "New York", "stateProvince": "NY", "postalCode": "10001", "countryCode": "US"},
@@ -278,7 +278,7 @@ curl -X POST https://gateway.flexops.io/api/shipping/rates \
 
 # Create a label (hazmatClassification 0 = not hazardous; required when there is no orderId)
 curl -X POST https://gateway.flexops.io/api/shipping/labels \
-  -H "X-API-Key: fxk_live_..." \
+  -H "X-API-Key: live_..." \
   -H "Content-Type: application/json" \
   -d '{
     "carrierCode": "USPS",
@@ -291,14 +291,14 @@ curl -X POST https://gateway.flexops.io/api/shipping/labels \
 
 # Track a shipment
 curl https://gateway.flexops.io/api/shipping/track/9400111899223456789012 \
-  -H "X-API-Key: fxk_live_..."
+  -H "X-API-Key: live_..."
 
 # Cancel (void) a label
 curl -X DELETE "https://gateway.flexops.io/api/shipping/labels/{labelId}?carrierCode=usps" \
-  -H "X-API-Key: fxk_live_..."
+  -H "X-API-Key: live_..."
 ```
 
-Use an `fxk_test_...` key instead of `fxk_live_...` to hit the sandbox environment; mock carriers respond, no real charges, no real labels.
+Use a `test_...` key instead of `live_...` to hit the sandbox environment; mock carriers respond, no real charges, no real labels.
 
 ## Wallet
 
@@ -465,7 +465,7 @@ try {
 ```typescript
 const client = new FlexOps({
   baseUrl: 'https://gateway.flexops.io',  // Default
-  apiKey: 'fxk_live_...',
+  apiKey: 'live_...',
   workspaceId: 'ws-abc123',
   timeout: 30000,                      // 30s default
   retry: {
