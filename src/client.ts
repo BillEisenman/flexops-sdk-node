@@ -39,8 +39,8 @@ import { HsCodesResource } from './resources/hs-codes.js';
  * import { FlexOps } from '@flexops/sdk';
  *
  * const client = new FlexOps({
- *   apiKey: 'fxk_live_...',
- *   workspaceId: 'ws_abc123',
+ *   apiKey: 'live_...',
+ *   workspaceId: 'your-workspace-id',
  * });
  *
  * // Get shipping rates
