@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-10-22
+
+3.2.0 adds multi-package labels and RMA reads, and types the returns calls with the shapes the Gateway sends. Code that used `ReturnAuthorization` fields from a returns call should switch to the new types.
+
 ### Added
 - `shipping.createMultiPackage(request, idempotencyKey?)` buys labels for one order shipped in 1 to 99 boxes
   (`POST /api/shipping/multi-package`), typed with `MultiPackageShipmentRequest`, `MultiPackageDetail`,
