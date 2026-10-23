@@ -159,7 +159,10 @@ const status = await client.shipping.getBatchStatus(batch.data!.jobId);
 
 One order shipped in several boxes with the same carrier and service. Each box gets its own label;
 a box that fails does not stop the others. Multi-package labels cannot carry HAZMAT: send
-`HazmatClassification.None` or leave `hazmatClassification` out.
+`HazmatClassification.None` or leave `hazmatClassification` out. `maximumPostageAmount` is required: the most the
+whole shipment may cost in USD (positive, at most two decimals). The Gateway refuses to buy a box that would take the
+total above it (`PriceCeilingExceeded`; once the amount is used up the remaining boxes report `PriceCeilingReached`),
+and a request without a valid ceiling is 400 `ApprovalRequired`.
 
 ```typescript
 import { FlexOpsError, HazmatClassification } from '@flexops/sdk';
@@ -171,6 +174,7 @@ try {
       carrierCode: 'USPS',
       serviceCode: 'PRIORITY',
       hazmatClassification: HazmatClassification.None,
+      maximumPostageAmount: 25, // required: the most the whole shipment may cost, in USD
       packages: [
         { weightInOunces: 16, lengthInInches: 10, widthInInches: 8, heightInInches: 4, packageReference: 'Box 1 of 2' },
         { weightInOunces: 8, lengthInInches: 6, widthInInches: 6, heightInInches: 6, packageReference: 'Box 2 of 2' },

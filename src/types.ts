@@ -828,6 +828,14 @@ export interface MultiPackageShipmentRequest {
    * (400 `HazmatNotSupported`); buy those labels one at a time with `shipping.createLabel`.
    */
   hazmatClassification?: typeof HazmatClassification.None;
+  /**
+   * The most the whole shipment may cost, in USD: required, positive, with at most two decimals. It covers the
+   * postage of every box. The Gateway refuses to buy a box that would take the total above it, so you never pay
+   * more: a box priced above what is left reports `PriceCeilingExceeded`, and once the amount is used up the
+   * remaining boxes report `PriceCeilingReached` and are not bought. Boxes already bought stay bought. A missing
+   * or invalid value is 400 `ApprovalRequired`. It is part of the request the `Idempotency-Key` identifies.
+   */
+  maximumPostageAmount: number;
   /** 1 to 99 boxes. */
   packages: MultiPackageDetail[];
 }

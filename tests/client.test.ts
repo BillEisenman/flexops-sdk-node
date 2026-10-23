@@ -1120,6 +1120,7 @@ describe('multi-package labels', () => {
     carrierCode: 'USPS',
     serviceCode: 'PRIORITY',
     hazmatClassification: HazmatClassification.None,
+    maximumPostageAmount: 25,
     packages: [
       { weightInOunces: 16, lengthInInches: 10, widthInInches: 8, heightInInches: 4, packageReference: 'Box 1 of 2' },
       { weightInOunces: 8, lengthInInches: 6, widthInInches: 6, heightInInches: 6, packageReference: 'Box 2 of 2' },
@@ -1140,6 +1141,7 @@ describe('multi-package labels', () => {
     expect(init.method).toBe('POST');
     expect(init.headers['Idempotency-Key']).toBe('order-15563627');
     expect(JSON.parse(init.body)).toEqual(request);
+    expect(JSON.parse(init.body).maximumPostageAmount).toBe(25);
     expect(result.data?.labels.map(l => l.trackingNumber)).toEqual(['9400-1', '9400-2']);
   });
 
@@ -1149,6 +1151,16 @@ describe('multi-package labels', () => {
     await createClient().shipping.createMultiPackage(request);
 
     expect(mockFetch.mock.calls[0][1].headers['Idempotency-Key']).toBeTruthy();
+  });
+
+  it('surfaces a refused ceiling as a FlexOpsError and does not retry it', async () => {
+    mockFetch.mockReturnValueOnce(jsonResponse({ success: false, message: 'Supply maximumPostageAmount in USD, positive and with at most two decimal places.', errorCode: 'ApprovalRequired' }, 400));
+
+    const error = await createClient().shipping.createMultiPackage({ ...request, maximumPostageAmount: 0 }).catch(e => e);
+
+    expect(error).toBeInstanceOf(FlexOpsError);
+    expect(error).toMatchObject({ status: 400, code: 'ApprovalRequired' });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the per-box results on an unknown outcome and does not retry it', async () => {
