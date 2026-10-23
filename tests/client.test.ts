@@ -690,17 +690,49 @@ describe('FlexOps Client', () => {
   describe('returns', () => {
     it('creates a return authorization', async () => {
       mockFetch.mockReturnValueOnce(
-        jsonResponse({ success: true, data: { rmaId: 'rma-001', status: 'Pending' } }),
+        jsonResponse({ success: true, data: { rmaNumber: 'RMA-1001', rmaId: 7, status: 'Pending' } }, 201),
       );
 
       const client = createClient();
       const result = await client.returns.create({
-        orderId: 'ord-001',
+        orderId: 1001,
         reason: 'Defective',
         items: [{ sku: 'SKU-001', quantity: 1 }],
       });
 
-      expect(result.data?.rmaId).toBe('rma-001');
+      expect(mockFetch.mock.calls[0][0]).toContain('/api/workspaces/ws-test-001/returns/rma');
+      expect(result.data?.rmaNumber).toBe('RMA-1001');
+      expect(result.data?.rmaId).toBe(7);
+    });
+
+    it('reads an RMA by its number from the RMA route', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: { rmaNumber: 'RMA-1001', rmaId: 7 } }));
+
+      const result = await createClient().returns.getRma('RMA-1001');
+
+      const [url, init] = mockFetch.mock.calls[0];
+      expect(new URL(url).pathname).toBe('/api/workspaces/ws-test-001/returns/rma/RMA-1001');
+      expect(init.method).toBe('GET');
+      expect(result.data?.rmaId).toBe(7);
+    });
+
+    it('lists RMAs from the RMA route with paging', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: [] }));
+
+      await createClient().returns.listRmas({ page: 2, pageSize: 50 });
+
+      const url = new URL(mockFetch.mock.calls[0][0]);
+      expect(url.pathname).toBe('/api/workspaces/ws-test-001/returns/rma');
+      expect(url.searchParams.get('page')).toBe('2');
+      expect(url.searchParams.get('pageSize')).toBe('50');
+    });
+
+    it('reads a received return by its numeric return id', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: { returnId: 42, items: [] } }));
+
+      await createClient().returns.get(42);
+
+      expect(new URL(mockFetch.mock.calls[0][0]).pathname).toBe('/api/workspaces/ws-test-001/returns/42');
     });
 
     it('sends the package weight and size on a return label (#672)', async () => {
@@ -1077,5 +1109,57 @@ describe('documented-API alignment (3.0)', () => {
     expect(sent()[0]).toBe(
       'http://localhost:5000/api/workspaces/ws-test-001/returns?startDate=2026-10-01&endDate=2026-10-19&page=2&pageSize=50',
     );
+  });
+});
+
+describe('multi-package labels', () => {
+  beforeEach(() => mockFetch.mockReset());
+
+  const request = {
+    orderId: 15563627,
+    carrierCode: 'USPS',
+    serviceCode: 'PRIORITY',
+    hazmatClassification: HazmatClassification.None,
+    packages: [
+      { weightInOunces: 16, lengthInInches: 10, widthInInches: 8, heightInInches: 4, packageReference: 'Box 1 of 2' },
+      { weightInOunces: 8, lengthInInches: 6, widthInInches: 6, heightInInches: 6, packageReference: 'Box 2 of 2' },
+    ],
+  };
+
+  it('posts the order and boxes to the multi-package route with the caller key', async () => {
+    mockFetch.mockReturnValueOnce(jsonResponse({
+      success: true,
+      data: { orderId: 15563627, carrierCode: 'USPS', totalPackages: 2, successfulPackages: 2, failedPackages: 0, totalCost: 18.94,
+        labels: [{ packageIndex: 0, success: true, trackingNumber: '9400-1' }, { packageIndex: 1, success: true, trackingNumber: '9400-2' }] },
+    }));
+
+    const result = await createClient().shipping.createMultiPackage(request, 'order-15563627');
+
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(new URL(url).pathname).toBe('/api/shipping/multi-package');
+    expect(init.method).toBe('POST');
+    expect(init.headers['Idempotency-Key']).toBe('order-15563627');
+    expect(JSON.parse(init.body)).toEqual(request);
+    expect(result.data?.labels.map(l => l.trackingNumber)).toEqual(['9400-1', '9400-2']);
+  });
+
+  it('generates an idempotency key when none is given', async () => {
+    mockFetch.mockReturnValueOnce(jsonResponse({ success: true, data: { labels: [] } }));
+
+    await createClient().shipping.createMultiPackage(request);
+
+    expect(mockFetch.mock.calls[0][1].headers['Idempotency-Key']).toBeTruthy();
+  });
+
+  it('keeps the per-box results on an unknown outcome and does not retry it', async () => {
+    const data = { orderId: 15563627, carrierCode: 'USPS', totalPackages: 2, successfulPackages: 0, failedPackages: 2, totalCost: 0,
+      labels: [{ packageIndex: 0, success: false, errorCode: 'OutcomeUnknown' }, { packageIndex: 1, success: false, errorCode: 'CarrierError' }] };
+    mockFetch.mockReturnValueOnce(jsonResponse({ success: false, message: 'No label was confirmed', errorCode: 'OutcomeUnknown', errors: ['Package 0: unknown'], data }, 409));
+
+    const error = await createClient().shipping.createMultiPackage(request).catch(e => e);
+
+    expect(error).toBeInstanceOf(FlexOpsError);
+    expect(error).toMatchObject({ status: 409, code: 'OutcomeUnknown', data });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });

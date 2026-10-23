@@ -31,6 +31,8 @@ import type {
   DeliveryPredictionRequest,
   DeliveryPredictionResponse,
   CostSavingsSummary,
+  MultiPackageShipmentRequest,
+  MultiPackageShipmentResponse,
 } from '../types.js';
 
 export class ShippingResource {
@@ -179,6 +181,33 @@ export class ShippingResource {
   /** Download a label from a batch job. */
   async downloadBatchLabel(jobId: string, itemId: string): Promise<Response> {
     return this.http.get(this.wsPath(`labels/batch/${jobId}/items/${itemId}/label`));
+  }
+
+  // -----------------------------------------------------------------------
+  // Multi-Package Labels
+  // -----------------------------------------------------------------------
+
+  /**
+   * Buy labels for one order shipped in several boxes (1 to 99) with the same carrier and service.
+   * Every box's label slot is reserved before any label is bought; a box that fails does not stop the
+   * others, and each box reports its own `success`, `errorMessage` and `errorCode`.
+   *
+   * Resolves when at least one label was bought (check `failedPackages`). When none was, the Gateway
+   * answers 422 `AllPackagesFailed`, or 409 `OutcomeUnknown` when a box's carrier outcome is unknown and
+   * a label may exist: both throw a `FlexOpsError` whose `data` is the `MultiPackageShipmentResponse`.
+   * After `OutcomeUnknown`, check the order before buying again.
+   *
+   * `hazmatClassification` accepts only `HazmatClassification.None` or nothing. Pass a stable
+   * `idempotencyKey` to retry safely across processes; otherwise one is generated for this call.
+   */
+  async createMultiPackage(
+    request: MultiPackageShipmentRequest,
+    idempotencyKey?: string,
+  ): Promise<ApiResponse<MultiPackageShipmentResponse>> {
+    return this.http.request('POST', '/api/shipping/multi-package', {
+      body: request,
+      ...(idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : {}),
+    });
   }
 
   // -----------------------------------------------------------------------

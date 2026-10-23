@@ -12,7 +12,10 @@ import type {
   ReceiveReturnRequest,
   ReturnRequest,
   ReturnLabelRequest,
-  ReturnAuthorization,
+  ReturnLabel,
+  ReturnSummary,
+  ReturnDetail,
+  Rma,
 } from '../types.js';
 
 export class ReturnsResource {
@@ -27,26 +30,42 @@ export class ReturnsResource {
     return `/api/workspaces/${id}/returns${suffix ? `/${suffix}` : ''}`;
   }
 
-  /** List return authorizations, optionally created between `startDate` and `endDate` (ISO 8601). */
+  /**
+   * List received returns, optionally between `startDate` and `endDate` (ISO 8601). The Gateway
+   * defaults to the last 30 days. To list return authorizations, use `listRmas()`.
+   */
   async list(query?: {
     startDate?: string;
     endDate?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<ApiResponse<ReturnAuthorization[]>> {
+  }): Promise<ApiResponse<ReturnSummary[]>> {
     return this.http.get(
       this.wsPath(''),
       query,
     );
   }
 
-  /** Get a return authorization by ID. */
-  async get(returnId: string): Promise<ApiResponse<ReturnAuthorization>> {
-    return this.http.get(this.wsPath(returnId));
+  /**
+   * Get a received return by its numeric return id (`ReturnSummary.returnId` or `Rma.returnId`).
+   * An RMA number is not a return id: the Gateway has no route for it here. Use `getRma()`.
+   */
+  async get(returnId: number | string): Promise<ApiResponse<ReturnDetail>> {
+    return this.http.get(this.wsPath(String(returnId)));
   }
 
-  /** Create a return authorization (RMA) for an order. */
-  async create(request: ReturnRequest): Promise<ApiResponse<ReturnAuthorization>> {
+  /** List return authorizations (RMAs), one page at a time. */
+  async listRmas(query?: { page?: number; pageSize?: number }): Promise<ApiResponse<Rma[]>> {
+    return this.http.get(this.wsPath('rma'), query);
+  }
+
+  /** Get a return authorization by its RMA number, for example `RMA-1001`. */
+  async getRma(rmaNumber: string): Promise<ApiResponse<Rma>> {
+    return this.http.get(this.wsPath(`rma/${encodeURIComponent(rmaNumber)}`));
+  }
+
+  /** Create a return authorization (RMA) for an order. The Gateway answers 201 with the RMA. */
+  async create(request: ReturnRequest): Promise<ApiResponse<Rma>> {
     return this.http.post(this.wsPath('rma'), request);
   }
 
@@ -58,12 +77,12 @@ export class ReturnsResource {
    * shipping preset has nothing else to take the package from and the call fails with a 400 that
    * names the missing fields.
    */
-  async generateLabel(rmaNumber: string, request: ReturnLabelRequest = {}): Promise<ApiResponse<unknown>> {
+  async generateLabel(rmaNumber: string, request: ReturnLabelRequest = {}): Promise<ApiResponse<ReturnLabel>> {
     return this.http.post(this.wsPath(`${rmaNumber}/label`), request);
   }
 
-  /** Record the inspected items of a returned package at a warehouse. */
-  async markReceived(rmaId: string, request: ReceiveReturnRequest): Promise<ApiResponse<unknown>> {
+  /** Record the inspected items of a returned package at a warehouse. `rmaId` is the numeric `Rma.rmaId`. */
+  async markReceived(rmaId: number | string, request: ReceiveReturnRequest): Promise<ApiResponse<unknown>> {
     return this.http.post(this.wsPath(`${rmaId}/receive`), request);
   }
 }

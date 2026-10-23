@@ -137,7 +137,7 @@ export class HttpClient {
       }
 
       // Parse error body
-      let errorBody: { message?: string; code?: string; errorCode?: string; errors?: string[] } = {};
+      let errorBody: { message?: string; code?: string; errorCode?: string; errors?: string[]; data?: unknown } = {};
       try {
         errorBody = (await response.json()) as typeof errorBody;
       } catch {
@@ -150,6 +150,7 @@ export class HttpClient {
         response.status,
         code ?? (response.status === 403 ? "FORBIDDEN" : undefined),
         errorBody.errors,
+        errorBody.data ?? undefined,
       );
 
       if (this.isRetryable(verb, response.status, code)) {

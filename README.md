@@ -155,6 +155,37 @@ const batch = await client.shipping.createBatch(request);
 const status = await client.shipping.getBatchStatus(batch.data!.jobId);
 ```
 
+### Multi-Package Labels
+
+One order shipped in several boxes with the same carrier and service. Each box gets its own label;
+a box that fails does not stop the others. Multi-package labels cannot carry HAZMAT: send
+`HazmatClassification.None` or leave `hazmatClassification` out.
+
+```typescript
+import { FlexOpsError, HazmatClassification } from '@flexops/sdk';
+
+try {
+  const shipment = await client.shipping.createMultiPackage(
+    {
+      orderId: 12345,
+      carrierCode: 'USPS',
+      serviceCode: 'PRIORITY',
+      hazmatClassification: HazmatClassification.None,
+      packages: [
+        { weightInOunces: 16, lengthInInches: 10, widthInInches: 8, heightInInches: 4, packageReference: 'Box 1 of 2' },
+        { weightInOunces: 8, lengthInInches: 6, widthInInches: 6, heightInInches: 6, packageReference: 'Box 2 of 2' },
+      ],
+    },
+    'order-12345-boxes', // optional Idempotency-Key, reuse it when you retry
+  );
+  // At least one label was bought; check each box
+  for (const box of shipment.data!.labels) console.log(box.packageIndex, box.success, box.trackingNumber ?? box.errorMessage);
+} catch (error) {
+  // No label was bought: 422 AllPackagesFailed, or 409 OutcomeUnknown when a label may exist (check the order first).
+  if (error instanceof FlexOpsError) console.log(error.code, error.data);
+}
+```
+
 ## Carrier-Specific Calls
 
 Rates, labels, voids, pickups and scan forms go through `client.shipping`, `client.pickups` and
@@ -348,22 +379,31 @@ const rma = await client.returns.create({
   reason: 'Defective product',
   items: [{ sku: 'WIDGET-001', quantity: 1 }],
 });
+const { rmaNumber, rmaId } = rma.data!;
+
+// Read it back by RMA number, or page through all RMAs
+const current = await client.returns.getRma(rmaNumber);
+const rmas = await client.returns.listRmas({ page: 1, pageSize: 25 });
 
 // Generate the return label. Send the package weight and size. Anything left out comes from the
 // workspace's default shipping preset; with no preset the API answers 400 PackageMeasurementsRequired.
-await client.returns.generateLabel('RMA-12345', {
+await client.returns.generateLabel(rmaNumber, {
   weightOz: 16,
   lengthIn: 10,
   widthIn: 8,
   heightIn: 4,
 });
 
-// Record the inspected items at a warehouse (disposition 0 restock, 1 refurbish, 2 dispose)
+// Record the inspected items at a warehouse (disposition 0 restock, 1 dispose, 2 forward)
 await client.returns.markReceived(rmaId, {
-  rmaNumber: 'RMA-12345',
+  rmaNumber,
   warehouseId: 1,
-  inspectedItems: [{ partNumber: 'WIDGET-001', quantity: 1, disposition: 2 }],
+  inspectedItems: [{ partNumber: 'WIDGET-001', quantity: 1, disposition: 0 }],
 });
+
+// Received returns: list them, then read one by its numeric return id
+const received = await client.returns.list({ startDate: '2026-10-01' });
+const detail = await client.returns.get(received.data![0].returnId);
 ```
 
 Approving, rejecting, cancelling and refunding returns are done in the FlexOps portal.

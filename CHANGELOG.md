@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `shipping.createMultiPackage(request, idempotencyKey?)` buys labels for one order shipped in 1 to 99 boxes
+  (`POST /api/shipping/multi-package`), typed with `MultiPackageShipmentRequest`, `MultiPackageDetail`,
+  `MultiPackageShipmentResponse` and `MultiPackageLabelResult`. `hazmatClassification` is typed to accept only
+  `HazmatClassification.None`, the one class the Gateway takes on this route (anything else is 400 `HazmatNotSupported`).
+- `returns.getRma(rmaNumber)` and `returns.listRmas()` read return authorizations (`GET .../returns/rma/{rmaNumber}` and
+  `GET .../returns/rma`). There was no way to read an RMA back after creating it.
+- `FlexOpsError.data` carries the envelope's `data` on an error reply. A multi-package 422 `AllPackagesFailed` or 409
+  `OutcomeUnknown` puts the per-box results there.
+- `Rma`, `RmaItem`, `ReturnSummary`, `ReturnDetail` and `ReturnLabel`, the shapes the returns routes send.
+
+### Fixed
+- `returns.create()` is typed `ApiResponse<Rma>`, `list()` `ApiResponse<ReturnSummary[]>`, `get()`
+  `ApiResponse<ReturnDetail>` and `generateLabel()` `ApiResponse<ReturnLabel>`. They were typed with
+  `ReturnAuthorization` (`rmaId: string`, `returnLabel`), a shape no route sends; `ReturnAuthorization` is deprecated.
+- `returns.get()` and `markReceived()` take a numeric id (`number | string`). `get()` reads a received return by its
+  return id: an RMA number such as `RMA-1001` matched no Gateway route. Use `getRma()` for an RMA.
+- `ReturnDisposition` is documented as the Gateway reads it: 0 restock, 1 dispose, 2 forward (it said 1 refurbish, 2 dispose).
+
 ## [3.1.0] - 2026-10-22
 
 3.1.0 types batch labels with the Gateway's order-based request. Existing code keeps compiling.

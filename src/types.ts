@@ -689,7 +689,7 @@ export interface ReturnLabelRequest {
   rateIndicator?: string;
 }
 
-/** How a received item is dispositioned: 0 restock, 1 refurbish, 2 dispose. */
+/** How a received item is dispositioned: 0 restock, 1 dispose, 2 forward. */
 export type ReturnDisposition = 0 | 1 | 2;
 
 /** Body of `POST /api/workspaces/{workspaceId}/returns/{rmaId}/receive`. */
@@ -705,11 +705,155 @@ export interface ReceiveReturnRequest {
   }[];
 }
 
+/**
+ * @deprecated No Gateway route returns this shape. `returns.create()` and `returns.getRma()` return an
+ * `Rma`, `returns.list()` returns `ReturnSummary` rows and `returns.get()` returns a `ReturnDetail`.
+ */
 export interface ReturnAuthorization {
   rmaId: string;
   status: string;
   returnLabel?: Label;
   createdAt: string;
+}
+
+/** One item on an RMA or a received return. */
+export interface RmaItem {
+  sku: string;
+  description?: string | null;
+  quantity: number;
+  unitPrice?: number;
+  extendedPrice?: number;
+  reason?: string | null;
+}
+
+/** A return authorization (the Gateway `RmaDto`). `rmaNumber` names it in the label and RMA routes. */
+export interface Rma {
+  rmaNumber: string;
+  /** Numeric RMA id, used by `returns.markReceived()`. */
+  rmaId: number;
+  orderId: number;
+  orderNumber?: string | null;
+  customerEmail?: string | null;
+  status: string;
+  reason?: string | null;
+  createdAt: string;
+  items: RmaItem[];
+  itemCount: number;
+  returnLabelTrackingNumber?: string | null;
+  notes?: string | null;
+  /** Numeric return id once the RMA has been received, used by `returns.get()`. */
+  returnId?: number | null;
+  dispositionStatus?: string | null;
+  appliedRuleId?: string | null;
+  appliedRuleName?: string | null;
+  requirePhotos?: boolean;
+  keepItem?: boolean;
+  appliedFeeCents?: number;
+}
+
+/** A received return (the Gateway `ReturnDto`), as `returns.list()` lists it. */
+export interface ReturnSummary {
+  returnId: number;
+  rmaNumber?: string | null;
+  orderId: number;
+  status: string;
+  returnDate: string;
+  dispositionType?: string | null;
+}
+
+/** A received return with its items (the Gateway `ReturnDetailDto`), from `returns.get()`. */
+export interface ReturnDetail extends ReturnSummary {
+  items: RmaItem[];
+  reason?: string | null;
+  notes?: string | null;
+  trackingNumber?: string | null;
+  carrierCode?: string | null;
+}
+
+/** A return label (the Gateway `ReturnLabelDto`), from `returns.generateLabel()`. */
+export interface ReturnLabel {
+  trackingNumber?: string | null;
+  /** The label image, base64 encoded. */
+  labelData?: string | null;
+  carrierCode: string;
+  rate?: number | null;
+  success: boolean;
+  errorMessage?: string | null;
+  costPolicy?: number;
+  deductedFromRefundCents?: number | null;
+  customerPaymentRequired?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Multi-package labels
+// ---------------------------------------------------------------------------
+
+/** One box in a multi-package shipment (the Gateway `PackageDetail`). */
+export interface MultiPackageDetail {
+  /** Weight in ounces, 0.1 to 999999. */
+  weightInOunces: number;
+  /** Length in inches, 0.1 to 999. */
+  lengthInInches: number;
+  /** Width in inches, 0.1 to 999. */
+  widthInInches: number;
+  /** Height in inches, 0.1 to 999. */
+  heightInInches: number;
+  deliveryConfirmationRequired?: boolean;
+  signatureConfirmationRequired?: boolean;
+  insuranceCoverageRequested?: boolean;
+  /** Coverage in USD. Needs `insuranceCoverageRequested: true`; left out, the order value is insured. */
+  insuredValue?: number;
+  /** Your label for the box, up to 100 characters (for example `Box 1 of 3`). */
+  packageReference?: string;
+}
+
+/**
+ * Body of `POST /api/shipping/multi-package` (the Gateway `MultiPackageShipmentRequest`): one order
+ * shipped in several boxes with the same carrier and service. Addresses come from the order.
+ */
+export interface MultiPackageShipmentRequest {
+  /** The order to ship. Required and positive. */
+  orderId: number;
+  /** Carrier for every box. */
+  carrierCode: string;
+  /** Service for every box. */
+  serviceCode?: string;
+  /** Defaults to `PDF` on the Gateway. */
+  labelFormat?: 'PDF' | 'PNG' | 'ZPL';
+  /** ISO 8601 date; defaults to today. */
+  shipDate?: string;
+  /**
+   * What the shipment holds. Multi-package labels cannot carry HAZMAT yet: send `HazmatClassification.None`
+   * (0) for no dangerous goods or leave it out for no answer. The Gateway refuses any other class
+   * (400 `HazmatNotSupported`); buy those labels one at a time with `shipping.createLabel`.
+   */
+  hazmatClassification?: typeof HazmatClassification.None;
+  /** 1 to 99 boxes. */
+  packages: MultiPackageDetail[];
+}
+
+/** One box's outcome in a multi-package shipment (the Gateway `PackageLabelResult`). */
+export interface MultiPackageLabelResult {
+  /** Index of the box in the request, from 0. */
+  packageIndex: number;
+  packageReference?: string | null;
+  trackingNumber?: string | null;
+  rate?: number | null;
+  success: boolean;
+  errorMessage?: string | null;
+  /** Stable refusal code when the box failed. `OutcomeUnknown` means a label may exist: check before retrying. */
+  errorCode?: string | null;
+}
+
+/** The Gateway `MultiPackageShipmentResponse`. */
+export interface MultiPackageShipmentResponse {
+  orderId: number;
+  carrierCode: string;
+  totalPackages: number;
+  successfulPackages: number;
+  failedPackages: number;
+  totalCost: number;
+  labels: MultiPackageLabelResult[];
 }
 
 // ---------------------------------------------------------------------------
@@ -1181,6 +1325,8 @@ export class FlexOpsError extends Error {
     public readonly status: number,
     public readonly code?: string,
     public readonly errors?: string[],
+    /** The envelope's `data` on an error reply, when the Gateway sends one (for example a multi-package 409 or 422). */
+    public readonly data?: unknown,
   ) {
     super(message);
     this.name = 'FlexOpsError';
