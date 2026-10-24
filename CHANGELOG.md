@@ -23,6 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Before, it sent none, so the Gateway gave each attempt a new ID and a retry after a lost response could create a
   second form. Repeating a request with the same `requestId` returns the same form; reusing it with different
   inputs is 409.
+- `ScanForm` now matches what the Gateway returns from `scanForms.create()`, `list()` and `get()`: `scanFormId`,
+  `state` (new `ScanFormState`: `Created` or `OutcomeUnknown`), `originPostalCode`, `trackingNumbers`,
+  `createdAtUtc`, `scanFormImage` (the base64 PDF, null for sandbox forms and unresolved operations),
+  `manifestNumber`, `manifestDate`, `packageCount`, `statusMessage`, `success`, `errorMessage` and `isSandbox`.
+  Before, it declared `formData` and `createdAt`, which the Gateway never sends, so they were always `undefined`.
+  They stay as deprecated optional fields that the SDK now fills from `scanFormImage` and `createdAtUtc`.
+  **Type change:** `formData` and `createdAt` are now `string | undefined` instead of `string`, so code assigning
+  them to a `string` needs `?? ''` or the new field names. At runtime they were already `undefined`.
+- Docs: `scanForms.create()` rejects with a 409 `FlexOpsError` when the `requestId` was used with different inputs,
+  when the packages already belong to a manifest, or when an operation needs review (its message names the
+  operation). These are not retried.
 
 ## [3.3.0] - 2026-10-22
 

@@ -82,6 +82,7 @@ export type {
   PickupConfirmation,
   ScanFormRequest,
   ScanForm,
+  ScanFormState,
   CarrierRecommendationRequest,
   CarrierRecommendationResponse,
   CarrierRecommendation,
