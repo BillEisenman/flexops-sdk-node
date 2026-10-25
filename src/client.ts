@@ -82,6 +82,7 @@ export class FlexOps {
   readonly workspaces: WorkspacesResource;
   readonly shipping: ShippingResource;
   readonly carriers: CarriersResource;
+  /** Webhook subscriptions. Needs a signed-in user's access token; API keys get `403` `SIGNED_IN_USER_REQUIRED`. */
   readonly webhooks: WebhooksResource;
   readonly wallet: WalletResource;
   readonly insurance: InsuranceResource;

@@ -232,8 +232,19 @@ await client.workspaces.inviteMember('newuser@company.com', WorkspaceRole.Member
 
 ## Webhooks
 
+Managing webhooks needs a signed-in user's access token. The Gateway refuses API keys on every webhook
+route, reads included (`list()` and `listDeliveryLogs()` as well as create, update, delete, `rotateSecret()`
+and `test()`), with `403` `SIGNED_IN_USER_REQUIRED`, whatever the key's scopes. Reads are refused too because
+webhook delivery logs carry each delivery's payload (order and customer data). A client with an API key
+sends the key even when an access token is also set, so use a client configured without `apiKey`.
+Verifying deliveries (below) makes no request and needs no credentials.
+
 ```typescript
-import { WebhookEventType } from '@flexops/sdk';
+import { FlexOps, WebhookEventType } from '@flexops/sdk';
+
+// Sign in as a user (or pass `accessToken`); an API key gets 403 SIGNED_IN_USER_REQUIRED here.
+const client = new FlexOps({ workspaceId: 'your-workspace-id' });
+await client.auth.login({ email: 'user@company.com', password: 'your-password' });
 
 // Create a subscription. Omit `events` to receive every event.
 const webhook = await client.webhooks.create({
