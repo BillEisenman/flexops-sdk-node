@@ -31,29 +31,38 @@ export class RulesResource {
     return this.http.get(this.wsPath(ruleId));
   }
 
-  /** Create a shipping rule. */
+  /** Create a shipping rule. Signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`, whatever their scopes. */
   async create(rule: ShippingRuleInput): Promise<ApiResponse<ShippingRule>> {
     return this.http.post(this.wsPath(''), rule);
   }
 
-  /** Replace a shipping rule. */
+  /** Replace a shipping rule. Signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`, whatever their scopes. */
   async update(ruleId: string, rule: ShippingRuleInput): Promise<ApiResponse<ShippingRule>> {
     return this.http.put(this.wsPath(ruleId), rule);
   }
 
-  /** Delete a shipping rule. The Gateway answers 204 No Content, so there is no result. */
+  /**
+   * Delete a shipping rule. The Gateway answers 204 No Content, so there is no result.
+   * Signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`, whatever their scopes.
+   */
   async delete(ruleId: string): Promise<void> {
     await this.http.delete(this.wsPath(ruleId));
   }
 
-  /** Reorder rules: each listed rule gets its position in `ruleIds` as its priority (0 first). */
+  /**
+   * Reorder rules: each listed rule gets its position in `ruleIds` as its priority (0 first).
+   * Signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`, whatever their scopes.
+   */
   async reorder(ruleIds: string[]): Promise<ApiResponse<ShippingRule[]>> {
     return this.http.post(this.wsPath('reorder'), {
       rules: ruleIds.map((ruleId, priority) => ({ ruleId, priority })),
     });
   }
 
-  /** Dry-run the workspace's rules against a sample shipment, without changing anything. */
+  /**
+   * Dry-run the workspace's rules against a sample shipment, without changing anything.
+   * API keys need `shipping:read`; the public demo keys are refused.
+   */
   async test(request: ShippingRuleTestRequest): Promise<ApiResponse<unknown>> {
     return this.http.post(this.wsPath('test'), { tags: [], ...request });
   }

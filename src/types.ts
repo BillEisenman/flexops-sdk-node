@@ -978,15 +978,81 @@ export interface PickupConfirmation {
 // Scan Forms
 // ---------------------------------------------------------------------------
 
+/** Body of `POST /api/workspaces/{workspaceId}/scan-forms`. */
 export interface ScanFormRequest {
+  /** Tracking numbers of the labels to put on the form: 1 to 1,000. */
   trackingNumbers: string[];
+  /**
+   * The labels' mailing date, `YYYY-MM-DD`. Live creation needs it: without it the Gateway answers
+   * 400 `Choose the label mailing date.` The sandbox defaults to today (UTC). Optional here so code
+   * written for the sandbox keeps compiling.
+   */
+  manifestDate?: string;
+  /**
+   * Identifies the operation (a UUID). Repeating a request with the same `requestId` returns the same
+   * form instead of creating another; reusing it with different inputs is 409. Keep it with the request
+   * to retry it yourself. When omitted, `scanForms.create` generates one per call and sends it on every
+   * retry of that call.
+   */
+  requestId?: string;
+  /** The origin ZIP group to manifest. Every selected package must ship from it. */
+  originPostalCode?: string;
+  /** Limits package selection to one warehouse. */
+  warehouseId?: number;
 }
 
+/**
+ * Where a SCAN form operation stands. `Created`: USPS returned the manifest, and the Gateway saved its number and
+ * PDF. `OutcomeUnknown`: the carrier's answer was lost or did not match, so the packages stay reserved and must not
+ * be submitted again until the outcome is resolved. Other values may be added; treat them like `OutcomeUnknown`.
+ */
+export type ScanFormState = 'Created' | 'OutcomeUnknown' | (string & {});
+
+/**
+ * A SCAN form (USPS PS Form 5630 manifest) as the Gateway returns it from `scanForms.create()`, `list()` and
+ * `get()`. `create()` resolves only for a created form: an operation that needs review, a `requestId` reused with
+ * different inputs, or packages already on another manifest reject with a 409 {@link FlexOpsError}.
+ */
 export interface ScanForm {
+  /** The form's ID: 32 hexadecimal digits, no dashes. Pass it to `scanForms.get()`. */
   scanFormId: string;
-  formData: string;
+  /** See {@link ScanFormState}. */
+  state: ScanFormState;
+  /** The origin ZIP the packages ship from, or null when none was recorded. */
+  originPostalCode: string | null;
+  /** The packages on the form, in ordinal order. */
   trackingNumbers: string[];
-  createdAt: string;
+  /** When the operation was recorded, ISO 8601 in UTC (for example `2026-09-08T21:14:03.512Z`). */
+  createdAtUtc: string;
+  /**
+   * The PS Form 5630 PDF, base64-encoded. Null when no PDF was saved: sandbox forms are never sent to USPS, and an
+   * operation whose outcome is unknown has none.
+   */
+  scanFormImage: string | null;
+  /** The USPS manifest number. `SBOX…` in the sandbox; empty while the outcome is unknown. */
+  manifestNumber: string | null;
+  /** The mailing date, as the Gateway writes a date without a zone (for example `2026-09-08T00:00:00`). */
+  manifestDate: string | null;
+  /** How many packages the form covers. */
+  packageCount: number;
+  /** A status line for people, for example `Created — USPS acceptance requires a carrier scan.` */
+  statusMessage: string | null;
+  /** True when `state` is `Created`. */
+  success: boolean;
+  /** Not set by the current Gateway; errors arrive as a rejected {@link FlexOpsError} instead. */
+  errorMessage: string | null;
+  /** True for a sandbox (test key) form, which is never transmitted to USPS. */
+  isSandbox: boolean;
+  /**
+   * @deprecated The Gateway never sent `formData`. The SDK now copies `scanFormImage` into it so older code keeps
+   * working; read `scanFormImage` instead.
+   */
+  formData?: string;
+  /**
+   * @deprecated The Gateway never sent `createdAt`. The SDK now copies `createdAtUtc` into it so older code keeps
+   * working; read `createdAtUtc` instead.
+   */
+  createdAt?: string;
 }
 
 // ---------------------------------------------------------------------------

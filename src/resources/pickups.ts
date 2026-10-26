@@ -25,7 +25,7 @@ export class PickupsResource {
     return `/api/workspaces/${id}/pickups${suffix ? `/${suffix}` : ''}`;
   }
 
-  /** Schedule a carrier pickup. */
+  /** Schedule a carrier pickup. API keys need `shipping:write`; the public demo keys are refused. */
   async schedule(request: PickupRequest): Promise<ApiResponse<PickupConfirmation>> {
     return this.http.post(this.wsPath(''), request);
   }
@@ -40,7 +40,7 @@ export class PickupsResource {
     return this.http.get(this.wsPath(pickupId), { carrierCode });
   }
 
-  /** Cancel a scheduled pickup. */
+  /** Cancel a scheduled pickup. API keys need `shipping:write`; the public demo keys are refused. */
   async cancel(pickupId: string): Promise<ApiResponse<unknown>> {
     return this.http.delete(this.wsPath(pickupId));
   }

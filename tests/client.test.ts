@@ -995,6 +995,102 @@ describe('documented-API alignment (3.0)', () => {
     expect(sent()[0]).toBe('http://localhost:5000/api/shipping/hs-codes/search?query=shoes&destinationCountry=CA');
   });
 
+  it("creates a SCAN form with the Gateway field names and the caller's requestId", async () => {
+    ok({ success: true, data: { scanFormId: 'sf-1' } });
+
+    await createClient().scanForms.create({
+      trackingNumbers: ['9400111899223456789014'], manifestDate: '2026-09-08', requestId: 'req-1',
+      originPostalCode: '10001', warehouseId: 7,
+    });
+
+    expect(sent()[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/scan-forms');
+    expect(sentBody()).toEqual({
+      trackingNumbers: ['9400111899223456789014'], manifestDate: '2026-09-08', requestId: 'req-1',
+      originPostalCode: '10001', warehouseId: 7,
+    });
+  });
+
+  it('generates one SCAN form requestId per call and resends it on every retry of that call', async () => {
+    mockFetch
+      .mockReturnValueOnce(jsonResponse({ message: 'Unavailable' }, 503))
+      .mockReturnValueOnce(jsonResponse({ success: true, data: { scanFormId: 'sf-1' } }))
+      .mockReturnValueOnce(jsonResponse({ success: true, data: { scanFormId: 'sf-2' } }));
+    const scanForms = createClient({ retry: { maxRetries: 2, baseDelay: 1 } }).scanForms;
+
+    await scanForms.create({ trackingNumbers: ['9400'], manifestDate: '2026-09-08' });
+    await scanForms.create({ trackingNumbers: ['9400'], manifestDate: '2026-09-08' });
+
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(sentBody(0).requestId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(sentBody(1).requestId).toBe(sentBody(0).requestId);
+    expect(sentBody(2).requestId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(sentBody(2).requestId).not.toBe(sentBody(0).requestId);
+  });
+
+  describe('SCAN form replies from the Gateway', () => {
+    const fixtures = JSON.parse(readFileSync(new URL('./fixtures/scan-forms.json', import.meta.url), 'utf8'));
+
+    it('reads a created form with the fields the Gateway sends', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse(fixtures.created));
+
+      const reply = await createClient().scanForms.create({
+        trackingNumbers: ['9400111899223456789014', '9400111899223456789021'], manifestDate: '2026-09-08',
+      });
+
+      const form = reply.data!;
+      expect(form.scanFormId).toBe('3f2b8c1e9d4a4f6b8a7e2c5d1b0f9e88');
+      expect(form.state).toBe('Created');
+      expect(form.success).toBe(true);
+      expect(form.manifestNumber).toBe('9475711899560013735215');
+      expect(form.manifestDate).toBe('2026-09-08T00:00:00');
+      expect(form.packageCount).toBe(2);
+      expect(form.trackingNumbers).toEqual(['9400111899223456789014', '9400111899223456789021']);
+      expect(form.createdAtUtc).toBe('2026-09-08T21:14:03.512Z');
+      expect(form.originPostalCode).toBe('78701');
+      expect(form.isSandbox).toBe(false);
+      expect(Buffer.from(form.scanFormImage!, 'base64').subarray(0, 5).toString('ascii')).toBe('%PDF-');
+      // The deprecated names, which the Gateway never sent, now carry the real values.
+      expect(form.formData).toBe(form.scanFormImage);
+      expect(form.createdAt).toBe(form.createdAtUtc);
+    });
+
+    it('lists sandbox forms without a PDF and forms whose outcome is unknown', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse(fixtures.list));
+
+      const forms = (await createClient().scanForms.list()).data!;
+
+      expect(forms).toHaveLength(2);
+      expect(forms[0]).toMatchObject({ isSandbox: true, scanFormImage: null, success: true });
+      expect(forms[0].manifestNumber).toMatch(/^SBOX/);
+      expect(forms[0].formData).toBeUndefined();
+      expect(forms[1]).toMatchObject({ state: 'OutcomeUnknown', success: false, manifestNumber: '', packageCount: 2 });
+      expect(forms[1].createdAt).toBe('2026-09-08T22:40:57.9Z');
+    });
+
+    it('gets one form and fills the deprecated names', async () => {
+      mockFetch.mockReturnValueOnce(jsonResponse(fixtures.created));
+
+      const form = (await createClient().scanForms.get('3f2b8c1e9d4a4f6b8a7e2c5d1b0f9e88')).data!;
+
+      expect(sent()[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/scan-forms/3f2b8c1e9d4a4f6b8a7e2c5d1b0f9e88');
+      expect(form.createdAt).toBe('2026-09-08T21:14:03.512Z');
+    });
+
+    it.each(['requestIdReused', 'needsReview'])('rejects the Gateway 409 (%s) once, without retrying', async name => {
+      const reply = fixtures[name];
+      mockFetch.mockReturnValue(jsonResponse(reply.body, reply.status));
+      const scanForms = createClient({ retry: { maxRetries: 2, baseDelay: 1 } }).scanForms;
+
+      const error = await scanForms.create({ trackingNumbers: ['9400'], manifestDate: '2026-09-08', requestId: 'req-1' })
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(FlexOpsError);
+      expect((error as FlexOpsError).status).toBe(409);
+      expect((error as FlexOpsError).message).toBe(reply.body.message);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('schedules pickups with the Gateway address fields and lists scheduled pickups', async () => {
     ok().mockReturnValueOnce(jsonResponse({ success: true, data: [] }));
     const pickups = createClient().pickups;

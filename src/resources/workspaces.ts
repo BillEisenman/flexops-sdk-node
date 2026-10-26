@@ -38,17 +38,17 @@ export class WorkspacesResource {
     return this.http.get(this.wsPath('members'));
   }
 
-  /** Invite a user to the workspace. */
+  /** Invite a user to the workspace. Signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`, whatever their scopes. */
   async inviteMember(email: string, role: WorkspaceRole = WorkspaceRole.Member): Promise<ApiResponse<unknown>> {
     return this.http.post(this.wsPath('members/invite'), { email, role });
   }
 
-  /** Remove a member from the workspace. */
+  /** Remove a member from the workspace. Signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`, whatever their scopes. */
   async removeMember(userId: string): Promise<ApiResponse<unknown>> {
     return this.http.delete(this.wsPath(`members/${userId}`));
   }
 
-  /** Change a member's role. */
+  /** Change a member's role. Signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`, whatever their scopes. */
   async updateMemberRole(userId: string, role: WorkspaceRole): Promise<ApiResponse<unknown>> {
     return this.http.put(this.wsPath(`members/${userId}/role`), { newRole: role });
   }

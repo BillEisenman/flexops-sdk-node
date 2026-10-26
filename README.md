@@ -197,7 +197,10 @@ Rates, labels, voids, pickups and scan forms go through `client.shipping`, `clie
 carrier-specific endpoints through the Gateway's legacy pass-through, which is deprecated and
 retired on 2027-06-30:
 
-- **Lookups (GET)** work with API keys.
+- **Lookups (GET)** work with API keys that have the permission for the data: `shipping:read` for
+  address, ZIP, city, location, service point and reference lookups; `tracking:read` for tracking
+  and proof of delivery; `rates:read` for delivery standards, rates and products. Without it the
+  Gateway returns 403 `API_KEY_SCOPE_REQUIRED`.
 - **Writes** (for example `carriers.usps.getDomesticRates`, `carriers.fedex.createPickup`) are marked
   `@deprecated`. They need a user token (`auth.login`): the Gateway answers an API key with 403
   `API_KEY_SCOPE_REQUIRED`. Move them to the native resources above.
@@ -473,6 +476,12 @@ const carriers = await client.analytics.carrierSummary();
 const returns = await client.analytics.returnsMetrics();
 const performance = await client.analytics.deliveryPerformance();
 ```
+
+`client.analytics`, `client.orders` and `client.inventory` read through the legacy pass-through. With
+an API key they need the permission for the data they read: `orders:read` for `client.orders`,
+`inventory:read` for `client.inventory`, and for `client.analytics` the permission named on each
+method (`shipping:read`, `inventory:read`, `orders:read` or `returns:read`). A key without it gets
+403 `API_KEY_SCOPE_REQUIRED`. Keys created with the default permissions have all of these.
 
 ## Automation Rules
 
