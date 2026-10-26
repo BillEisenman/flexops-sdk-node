@@ -14,8 +14,12 @@ import type { CanonicalLabelRequest, Label } from '../types.js';
  * Direct carrier operations via the VisionSuite Core Services API proxy.
  *
  * Pass-throughs to carrier-specific endpoints (USPS, UPS, FedEx, DHL) via the Gateway's legacy
- * ApiProxy route, deprecated and sunset on 2027-06-30. The GET lookups work with API keys. The
- * writes are marked deprecated: they need a user token (`auth.login`), because the Gateway refuses
+ * ApiProxy route, deprecated and sunset on 2027-06-30. The GET lookups work with API keys that
+ * have the permission for the data they read: address, ZIP, city, location, service point and
+ * reference lookups require `shipping:read`; tracking and proof of delivery require
+ * `tracking:read`; delivery standards, rates and products require `rates:read`. A key without the
+ * permission gets 403 `API_KEY_SCOPE_REQUIRED`; keys created with the default permissions have all
+ * three. The writes are marked deprecated: they need a user token (`auth.login`), because the Gateway refuses
  * API-key writes on the proxy with 403 `API_KEY_SCOPE_REQUIRED`. Label purchases through the proxy are
  * closed (410); rates, labels, voids, pickups and scan forms go through `client.shipping`,
  * `client.pickups` and `client.scanForms` for every carrier.

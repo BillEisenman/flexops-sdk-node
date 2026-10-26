@@ -9,6 +9,13 @@
 import type { HttpClient } from '../http.js';
 import type { ApiResponse, Order } from '../types.js';
 
+/**
+ * Read-only order lookups through the legacy VisionSuite API proxy (`/api/ApiProxy/api/v1/Order/...`).
+ *
+ * With an API key, every method requires the `orders:read` permission; a key without it gets 403
+ * `API_KEY_SCOPE_REQUIRED`. Keys created with the default permissions include `orders:read`. The
+ * proxy refuses writes from API keys.
+ */
 export class OrdersResource {
   constructor(private readonly http: HttpClient) {}
 

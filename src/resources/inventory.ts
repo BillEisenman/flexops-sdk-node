@@ -9,6 +9,14 @@
 import type { HttpClient } from '../http.js';
 import type { ApiResponse } from '../types.js';
 
+/**
+ * Read-only inventory lookups through the legacy VisionSuite API proxy
+ * (`/api/ApiProxy/api/v1/Inventory/...`).
+ *
+ * With an API key, every method requires the `inventory:read` permission; a key without it gets 403
+ * `API_KEY_SCOPE_REQUIRED`. Keys created with the default permissions include `inventory:read`. The
+ * proxy refuses writes from API keys.
+ */
 export class InventoryResource {
   constructor(private readonly http: HttpClient) {}
 
