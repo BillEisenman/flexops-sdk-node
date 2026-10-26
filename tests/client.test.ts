@@ -995,6 +995,38 @@ describe('documented-API alignment (3.0)', () => {
     expect(sent()[0]).toBe('http://localhost:5000/api/shipping/hs-codes/search?query=shoes&destinationCountry=CA');
   });
 
+  it("creates a SCAN form with the Gateway field names and the caller's requestId", async () => {
+    ok({ success: true, data: { scanFormId: 'sf-1' } });
+
+    await createClient().scanForms.create({
+      trackingNumbers: ['9400111899223456789014'], manifestDate: '2026-09-08', requestId: 'req-1',
+      originPostalCode: '10001', warehouseId: 7,
+    });
+
+    expect(sent()[0]).toBe('http://localhost:5000/api/workspaces/ws-test-001/scan-forms');
+    expect(sentBody()).toEqual({
+      trackingNumbers: ['9400111899223456789014'], manifestDate: '2026-09-08', requestId: 'req-1',
+      originPostalCode: '10001', warehouseId: 7,
+    });
+  });
+
+  it('generates one SCAN form requestId per call and resends it on every retry of that call', async () => {
+    mockFetch
+      .mockReturnValueOnce(jsonResponse({ message: 'Unavailable' }, 503))
+      .mockReturnValueOnce(jsonResponse({ success: true, data: { scanFormId: 'sf-1' } }))
+      .mockReturnValueOnce(jsonResponse({ success: true, data: { scanFormId: 'sf-2' } }));
+    const scanForms = createClient({ retry: { maxRetries: 2, baseDelay: 1 } }).scanForms;
+
+    await scanForms.create({ trackingNumbers: ['9400'], manifestDate: '2026-09-08' });
+    await scanForms.create({ trackingNumbers: ['9400'], manifestDate: '2026-09-08' });
+
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(sentBody(0).requestId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(sentBody(1).requestId).toBe(sentBody(0).requestId);
+    expect(sentBody(2).requestId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(sentBody(2).requestId).not.toBe(sentBody(0).requestId);
+  });
+
   it('schedules pickups with the Gateway address fields and lists scheduled pickups', async () => {
     ok().mockReturnValueOnce(jsonResponse({ success: true, data: [] }));
     const pickups = createClient().pickups;

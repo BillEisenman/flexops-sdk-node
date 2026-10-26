@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `ScanFormRequest` takes `manifestDate` (`YYYY-MM-DD`), `requestId`, `originPostalCode` and `warehouseId`, the
+  fields of the Gateway's SCAN form request. Live creation needs `manifestDate`: without it the Gateway answers
+  400 `Choose the label mailing date.` It stays optional in the type because the sandbox defaults it to today.
+
+### Changed
+- Docs: `pickups.schedule()`/`cancel()` and `scanForms.create()` need `shipping:write` with an API key, and the
+  public demo keys cannot use them. `rules.test()` needs `shipping:read`. Shipping rule changes (`rules.create()`,
+  `update()`, `delete()`, `reorder()`) and member changes (`workspaces.inviteMember()`, `removeMember()`,
+  `updateMemberRole()`) are for signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`.
+
+### Fixed
+- `scanForms.create()` sends a `requestId`: yours, or a UUID generated for the call and sent on every retry of it.
+  Before, it sent none, so the Gateway gave each attempt a new ID and a retry after a lost response could create a
+  second form. Repeating a request with the same `requestId` returns the same form; reusing it with different
+  inputs is 409.
+
 ## [3.3.0] - 2026-10-22
 
 3.3.0 requires a maximum total price on multi-package labels: the Gateway refuses to buy a box that would take the shipment above it. It changes only the multi-package call released earlier today.

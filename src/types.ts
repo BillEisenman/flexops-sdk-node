@@ -978,8 +978,27 @@ export interface PickupConfirmation {
 // Scan Forms
 // ---------------------------------------------------------------------------
 
+/** Body of `POST /api/workspaces/{workspaceId}/scan-forms`. */
 export interface ScanFormRequest {
+  /** Tracking numbers of the labels to put on the form: 1 to 1,000. */
   trackingNumbers: string[];
+  /**
+   * The labels' mailing date, `YYYY-MM-DD`. Live creation needs it: without it the Gateway answers
+   * 400 `Choose the label mailing date.` The sandbox defaults to today (UTC). Optional here so code
+   * written for the sandbox keeps compiling.
+   */
+  manifestDate?: string;
+  /**
+   * Identifies the operation (a UUID). Repeating a request with the same `requestId` returns the same
+   * form instead of creating another; reusing it with different inputs is 409. Keep it with the request
+   * to retry it yourself. When omitted, `scanForms.create` generates one per call and sends it on every
+   * retry of that call.
+   */
+  requestId?: string;
+  /** The origin ZIP group to manifest. Every selected package must ship from it. */
+  originPostalCode?: string;
+  /** Limits package selection to one warehouse. */
+  warehouseId?: number;
 }
 
 export interface ScanForm {
