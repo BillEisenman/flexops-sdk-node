@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   public demo keys cannot use them. `rules.test()` needs `shipping:read`. Shipping rule changes (`rules.create()`,
   `update()`, `delete()`, `reorder()`) and member changes (`workspaces.inviteMember()`, `removeMember()`,
   `updateMemberRole()`) are for signed-in users only: API keys get 403 `SIGNED_IN_USER_REQUIRED`.
+- Docs: every `webhooks` method that calls the Gateway (`list`, `create`, `update`, `delete`, `rotateSecret`,
+  `listDeliveryLogs` and `test`) and the README now say it needs a signed-in user's access token. The Gateway
+  refuses API keys on every webhook route, reads included, with 403 `SIGNED_IN_USER_REQUIRED`, whatever the
+  key's scopes; reads are refused because webhook delivery logs carry each delivery's payload (order and
+  customer data). A client with an API key sends the key even when an access token is set. The README webhook
+  example now signs in first. `verifySignature` needs no credentials. No behavior change.
 
 ### Fixed
 - `scanForms.create()` sends a `requestId`: yours, or a UUID generated for the call and sent on every retry of it.

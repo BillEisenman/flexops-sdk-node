@@ -16,6 +16,18 @@ import type {
   UpdateWebhookRequest,
 } from '../types.js';
 
+/**
+ * Webhook subscriptions for the workspace.
+ *
+ * Every method that calls the Gateway needs a signed-in user's access token (`accessToken`,
+ * `setAccessToken()` or `auth.login()`). The Gateway refuses API keys on every webhook route, reads
+ * included, with `403` `SIGNED_IN_USER_REQUIRED` (a {@link FlexOpsError} whose `code` is
+ * `SIGNED_IN_USER_REQUIRED`), whatever the key's scopes. Reads are refused too because webhook delivery
+ * logs carry each delivery's payload (order and customer data). A client with an API key sends the key
+ * even when an access token is also set, so call these methods from a client configured without `apiKey`.
+ *
+ * {@link WebhooksResource.verifySignature} makes no request and needs no credentials.
+ */
 export class WebhooksResource {
   constructor(
     private readonly http: HttpClient,
@@ -28,7 +40,13 @@ export class WebhooksResource {
     return `/api/workspaces/${id}/webhooks${suffix ? `/${suffix}` : ''}`;
   }
 
-  /** List all webhook subscriptions for the workspace. */
+  /**
+   * List all webhook subscriptions for the workspace.
+   *
+   * Needs a signed-in user's access token. Reads are signed-in only, like the writes, because webhook
+   * delivery logs carry each delivery's payload (order and customer data).
+   * @throws FlexOpsError (`403`, `SIGNED_IN_USER_REQUIRED`) when the client authenticates with an API key.
+   */
   async list(): Promise<ApiResponse<WebhookSubscription[]>> {
     return this.http.get(this.wsPath(''));
   }
@@ -36,7 +54,10 @@ export class WebhooksResource {
   /**
    * Create a webhook subscription. `events` is sent as the Gateway's comma-separated `eventTypes`;
    * omit it to receive every event. The result's `data.secret` is the signing secret, returned only here.
+   *
+   * Needs a signed-in user's access token.
    * @throws FlexOpsError (`UnknownWebhookEvent`) when `events` is empty or names an event FlexOps does not send.
+   * @throws FlexOpsError (`403`, `SIGNED_IN_USER_REQUIRED`) when the client authenticates with an API key.
    */
   async create(request: CreateWebhookRequest): Promise<ApiResponse<WebhookSubscription>> {
     const body = await this.http.post<unknown>(this.wsPath(''), toWireRequest(request));
@@ -45,28 +66,52 @@ export class WebhooksResource {
 
   /**
    * Update a webhook subscription. `events`, when given, replaces the subscribed events.
+   *
+   * Needs a signed-in user's access token.
    * @throws FlexOpsError (`UnknownWebhookEvent`) when `events` is empty or names an event FlexOps does not send.
+   * @throws FlexOpsError (`403`, `SIGNED_IN_USER_REQUIRED`) when the client authenticates with an API key.
    */
   async update(webhookId: string, data: UpdateWebhookRequest): Promise<ApiResponse<WebhookSubscription>> {
     return this.http.put(this.wsPath(webhookId), toWireRequest(data));
   }
 
-  /** Delete a webhook subscription. The Gateway answers 204 No Content, so there is no result. */
+  /**
+   * Delete a webhook subscription. The Gateway answers 204 No Content, so there is no result.
+   *
+   * Needs a signed-in user's access token.
+   * @throws FlexOpsError (`403`, `SIGNED_IN_USER_REQUIRED`) when the client authenticates with an API key.
+   */
   async delete(webhookId: string): Promise<void> {
     await this.http.delete(this.wsPath(webhookId));
   }
 
-  /** Rotate the signing secret for a webhook. */
+  /**
+   * Rotate the signing secret for a webhook.
+   *
+   * Needs a signed-in user's access token.
+   * @throws FlexOpsError (`403`, `SIGNED_IN_USER_REQUIRED`) when the client authenticates with an API key.
+   */
   async rotateSecret(webhookId: string): Promise<ApiResponse<{ secret: string }>> {
     return this.http.post(this.wsPath(`${webhookId}/rotate-secret`));
   }
 
-  /** List delivery logs for a webhook. */
+  /**
+   * List delivery logs for a webhook.
+   *
+   * Needs a signed-in user's access token. Reads are signed-in only, like the writes, because webhook
+   * delivery logs carry each delivery's payload (order and customer data).
+   * @throws FlexOpsError (`403`, `SIGNED_IN_USER_REQUIRED`) when the client authenticates with an API key.
+   */
   async listDeliveryLogs(webhookId: string): Promise<ApiResponse<unknown[]>> {
     return this.http.get(this.wsPath(`${webhookId}/deliveries`));
   }
 
-  /** Send a test event to a webhook's endpoint. */
+  /**
+   * Send a test event to a webhook's endpoint.
+   *
+   * Needs a signed-in user's access token.
+   * @throws FlexOpsError (`403`, `SIGNED_IN_USER_REQUIRED`) when the client authenticates with an API key.
+   */
   async test(webhookId: string): Promise<ApiResponse<unknown>> {
     return this.http.post(this.wsPath(`${webhookId}/test`));
   }
