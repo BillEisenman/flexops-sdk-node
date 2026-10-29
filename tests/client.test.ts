@@ -277,6 +277,23 @@ describe('FlexOps Client', () => {
       );
     });
 
+    it('sends what a USPS cancel cancels in the query string', async () => {
+      const client = createClient();
+      mockFetch.mockImplementation(() => jsonResponse({ success: true }));
+
+      await client.carriers.usps.cancelPickup('WTC 123');
+      await client.carriers.usps.cancelDomesticLabel('9400111899223456789012');
+      await client.carriers.usps.cancelInternationalLabel('LZ123456789US');
+
+      const urls = mockFetch.mock.calls.map(([url, init]) => `${init.method} ${url}`);
+      expect(urls).toEqual([
+        'DELETE http://localhost:5000/api/ApiProxy/api/v3/CarrierPickup/cancelUspsCarrierPickupSchedule?confirmationNumber=WTC+123',
+        'DELETE http://localhost:5000/api/ApiProxy/api/v3/Shipping/cancelUspsDomesticShipmentLabel?trackingNumber=9400111899223456789012',
+        'DELETE http://localhost:5000/api/ApiProxy/api/v3/Shipping/cancelUspsInternationalShipmentLabel?internationalTrackingNumber=LZ123456789US',
+      ]);
+      expect(() => client.carriers.usps.cancelPickup(' ')).toThrow('confirmationNumber is required.');
+    });
+
     it('offers no label purchases the proxy closes (410) and no PATCH, which the proxy lacks', () => {
       const carriers = createClient().carriers as unknown as Record<string, Record<string, unknown>>;
 

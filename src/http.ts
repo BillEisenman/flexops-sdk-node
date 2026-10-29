@@ -180,8 +180,8 @@ export class HttpClient {
     return this.request<T>('PATCH', path, { body });
   }
 
-  async delete<T>(path: string): Promise<T> {
-    return this.request<T>('DELETE', path);
+  async delete<T>(path: string, query?: Record<string, string | number | boolean | undefined>): Promise<T> {
+    return this.request<T>('DELETE', path, { query });
   }
 
   private buildUrl(path: string, query?: Record<string, string | number | boolean | undefined>): string {
