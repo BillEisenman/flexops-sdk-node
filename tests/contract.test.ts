@@ -247,6 +247,10 @@ for (const name of DEPRECATED_PROXY_WRITES) {
   const [, group, method] = name.split('.');
   scenarios[name] = c => (c.carriers as unknown as Record<string, Record<string, (body?: unknown) => Promise<unknown>>>)[group][method]({});
 }
+// ...except the USPS cancels, which name what they cancel.
+scenarios['carriers.usps.cancelDomesticLabel'] = c => c.carriers.usps.cancelDomesticLabel('9400111899223456789012');
+scenarios['carriers.usps.cancelInternationalLabel'] = c => c.carriers.usps.cancelInternationalLabel('LZ123456789US');
+scenarios['carriers.usps.cancelPickup'] = c => c.carriers.usps.cancelPickup('WTC123');
 
 /** Every public API method on a client, as `resource.method` or `resource.group.method`. */
 function publicMethods(client: FlexOps): string[] {

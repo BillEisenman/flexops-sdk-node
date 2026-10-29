@@ -108,22 +108,28 @@ export class CarriersResource {
     /**
      * Cancel a domestic label.
      *
+     * @param trackingNumber The label's tracking number.
      * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
      *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
      *   cover this.
      */
-    cancelDomesticLabel: () =>
-      this.http.delete(this.proxy('api/v3/Shipping/cancelUspsDomesticShipmentLabel')),
+    cancelDomesticLabel: (trackingNumber: string) => {
+      if (!trackingNumber?.trim()) throw new Error('trackingNumber is required.');
+      return this.http.delete(this.proxy('api/v3/Shipping/cancelUspsDomesticShipmentLabel'), { trackingNumber });
+    },
 
     /**
      * Cancel an international label.
      *
+     * @param internationalTrackingNumber The label's international tracking number.
      * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
      *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
      *   cover this.
      */
-    cancelInternationalLabel: () =>
-      this.http.delete(this.proxy('api/v3/Shipping/cancelUspsInternationalShipmentLabel')),
+    cancelInternationalLabel: (internationalTrackingNumber: string) => {
+      if (!internationalTrackingNumber?.trim()) throw new Error('internationalTrackingNumber is required.');
+      return this.http.delete(this.proxy('api/v3/Shipping/cancelUspsInternationalShipmentLabel'), { internationalTrackingNumber });
+    },
 
     /** Get tracking summary. */
     trackSummary: (params: Record<string, string>) =>
@@ -146,12 +152,15 @@ export class CarriersResource {
     /**
      * Cancel a pickup.
      *
+     * @param confirmationNumber The pickup's confirmation number.
      * @deprecated Legacy carrier proxy (sunset 2027-06-30). Needs a user token: API keys get 403
      *   `API_KEY_SCOPE_REQUIRED`. Use `client.shipping` / `client.pickups` / `client.scanForms` where they
      *   cover this.
      */
-    cancelPickup: () =>
-      this.http.delete(this.proxy('api/v3/CarrierPickup/cancelUspsCarrierPickupSchedule')),
+    cancelPickup: (confirmationNumber: string) => {
+      if (!confirmationNumber?.trim()) throw new Error('confirmationNumber is required.');
+      return this.http.delete(this.proxy('api/v3/CarrierPickup/cancelUspsCarrierPickupSchedule'), { confirmationNumber });
+    },
 
     /**
      * Create a scan form.

@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   example now signs in first. `verifySignature` needs no credentials. No behavior change.
 
 ### Fixed
+- `carriers.usps.cancelPickup(confirmationNumber)`, `cancelDomesticLabel(trackingNumber)` and
+  `cancelInternationalLabel(internationalTrackingNumber)` send what they cancel. Before, they sent no identifier, so
+  VisionSuite answered 400 and nothing was cancelled. A blank value is refused before any request.
 - `scanForms.create()` sends a `requestId`: yours, or a UUID generated for the call and sent on every retry of it.
   Before, it sent none, so the Gateway gave each attempt a new ID and a retry after a lost response could create a
   second form. Repeating a request with the same `requestId` returns the same form; reusing it with different
