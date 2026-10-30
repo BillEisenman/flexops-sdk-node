@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-10-30
+
 ### Added
 - `ScanFormRequest` takes `manifestDate` (`YYYY-MM-DD`), `requestId`, `originPostalCode` and `warehouseId`, the
   fields of the Gateway's SCAN form request. Live creation needs `manifestDate`: without it the Gateway answers
   400 `Choose the label mailing date.` It stays optional in the type because the sandbox defaults it to today.
 
 ### Changed
+- The Gateway previews sandbox labels too: a `test_` key now needs `maximumPostageAmount`, and the label comes from the approval.
 - Docs: `pickups.schedule()`/`cancel()` and `scanForms.create()` need `shipping:write` with an API key, and the
   public demo keys cannot use them. `rules.test()` needs `shipping:read`. Shipping rule changes (`rules.create()`,
   `update()`, `delete()`, `reorder()`) and member changes (`workspaces.inviteMember()`, `removeMember()`,
