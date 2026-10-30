@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`@flexops/sdk` is the **official hand-crafted Node/TypeScript SDK** for the FlexOps Platform. It targets the FlexOps **Gateway BFF**. Published to npm as `@flexops/sdk`; current version `1.0.2`.
+`@flexops/sdk` is the **official hand-crafted Node/TypeScript SDK** for the FlexOps Platform. It targets the FlexOps **Gateway BFF**. Published to npm as `@flexops/sdk`; `package.json` holds the current version.
 
 > **Gateway-targeted, not VSCS-targeted.** All hand-crafted SDKs in this family (.NET, Node, Python, Go, PHP, Ruby) hit Gateway. The Java SDK is the lone exception — it was auto-generated against VisionSuiteCoreServices and is archived as of 2026-03-08.
 
@@ -16,6 +16,7 @@ npm run preprocess              # Preprocess specs (scripts/preprocess-specs.mjs
 npm run build                   # Build to dist/ (ESM + CJS + types)
 npm run test                    # Vitest
 npm run typecheck               # tsc --noEmit
+npm run lint                    # ESLint over src/
 ```
 
 ## Architecture
