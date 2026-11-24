@@ -4,3 +4,7 @@ src/generated/
 specs/processed/
 *.tgz
 .env
+
+# BLA (bla-agents) hardening artifacts — config (.blarc) is committed; these are not
+.bla-hardened/
+.bla-manifest.json
