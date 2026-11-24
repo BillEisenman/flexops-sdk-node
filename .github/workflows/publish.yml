@@ -48,16 +48,32 @@ jobs:
         run: npm run build
 
       - name: Verify Gateway URL shipped
+        # The build output is hardened by BLA (postbuild), which string-encodes
+        # literals — so a byte-grep for "gateway.flexops.io" no longer works.
+        # Verify the stronger property instead: the shipped artifact RESOLVES the
+        # right base URL at runtime (encoding is reversed at runtime). This proves
+        # behaviour survives hardening, not just that a string is present.
         run: |
           set -e
-          if ! grep -q "gateway.flexops.io" dist/index.js; then
-            echo "::error::dist/index.js does not reference gateway.flexops.io"
-            exit 1
-          fi
-          if grep -q "api.flexops.io" dist/index.js; then
-            echo "::error::dist/index.js still references the retired api.flexops.io"
-            exit 1
-          fi
+          cat > "$RUNNER_TEMP/check-gateway-url.mjs" <<'EOF'
+          import { readFileSync } from 'node:fs';
+          import { resolve } from 'node:path';
+          import { pathToFileURL } from 'node:url';
+          const map = JSON.parse(readFileSync('./package.json', 'utf8')).exports['.'];
+          const entry = map.import.replace(/^\.\//, '');
+          const m = await import(pathToFileURL(resolve(entry)).href);
+          const dump = JSON.stringify(new m.FlexOps({ apiKey: 'sk_test_ci' }));
+          if (!dump.includes('gateway.flexops.io')) {
+            console.error('::error::built SDK does not resolve gateway.flexops.io at runtime');
+            process.exit(1);
+          }
+          if (dump.includes('api.flexops.io')) {
+            console.error('::error::built SDK still resolves the retired api.flexops.io');
+            process.exit(1);
+          }
+          console.log('Gateway URL OK: resolves https://gateway.flexops.io at runtime');
+          EOF
+          node "$RUNNER_TEMP/check-gateway-url.mjs"
 
       - name: Smoke-check package exports resolve
         run: |
